@@ -51,6 +51,9 @@ export default function RoundList() {
                     <div className="round-date">{formatDate(round.date)}</div>
                     <div className="round-course">
                       {course?.shortName || round.courseId}
+                      {round.isCompetition && (
+                        <span className="competition-badge">競技</span>
+                      )}
                       {green && course?.greens?.length > 1 && (
                         <span className="green-badge">{green.name}</span>
                       )}

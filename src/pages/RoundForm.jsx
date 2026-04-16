@@ -24,15 +24,16 @@ export default function RoundForm() {
   const initTeeId    = existingRound?.teeId    || defaultTeeId(initCourse, initGreenId)
 
   // ---- フォーム状態 ----
-  const [date,        setDate]        = useState(existingRound?.date || new Date().toISOString().slice(0, 10))
-  const [courseId,    setCourseId]    = useState(initCourseId)
-  const [greenId,     setGreenId]     = useState(initGreenId)
-  const [teeId,       setTeeId]       = useState(initTeeId)
-  const [inputMode,   setInputMode]   = useState(existingRound?.inputMode  || 'hole')
-  const [scores,      setScores]      = useState(existingRound?.scores     || Array(18).fill(''))
-  const [grossScore,  setGrossScore]  = useState(existingRound?.grossScore?.toString() || '')
-  const [memo,        setMemo]        = useState(existingRound?.memo       || '')
-  const [imagePreview, setImagePreview] = useState(existingRound?.imageDataUrl || null)
+  const [date,          setDate]          = useState(existingRound?.date || new Date().toISOString().slice(0, 10))
+  const [courseId,      setCourseId]      = useState(initCourseId)
+  const [greenId,       setGreenId]       = useState(initGreenId)
+  const [teeId,         setTeeId]         = useState(initTeeId)
+  const [inputMode,     setInputMode]     = useState(existingRound?.inputMode  || 'hole')
+  const [scores,        setScores]        = useState(existingRound?.scores     || Array(18).fill(''))
+  const [grossScore,    setGrossScore]    = useState(existingRound?.grossScore?.toString() || '')
+  const [memo,          setMemo]          = useState(existingRound?.memo       || '')
+  const [isCompetition, setIsCompetition] = useState(existingRound?.isCompetition || false)
+  const [imagePreview,  setImagePreview]  = useState(existingRound?.imageDataUrl || null)
 
   const course = courses.find(c => c.id === courseId)
   const green  = course?.greens?.find(g => g.id === greenId)
@@ -117,6 +118,7 @@ export default function RoundForm() {
       scores: (inputMode === 'hole' || inputMode === 'image') ? parsedScores : [],
       grossScore: total,
       memo,
+      isCompetition,
       imageDataUrl: inputMode === 'image' ? (imagePreview || null) : null,
     }
 
@@ -149,6 +151,18 @@ export default function RoundForm() {
               onChange={e => setDate(e.target.value)}
               className="form-input"
             />
+          </div>
+
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={isCompetition}
+                onChange={e => setIsCompetition(e.target.checked)}
+                className="form-checkbox"
+              />
+              競技成績として登録する
+            </label>
           </div>
 
           <div className="form-group">
@@ -441,7 +455,8 @@ function TotalInput({ grossScore, onChange, par }) {
    画像読み取り入力
    ────────────────────────────────────────────── */
 function ImageInput({ imagePreview, holes, scores, courseHandicap, onChange, onImageChange, total }) {
-  const fileRef = useRef(null)
+  const cameraRef  = useRef(null)
+  const libraryRef = useRef(null)
 
   return (
     <div className="image-input-container">
@@ -449,30 +464,58 @@ function ImageInput({ imagePreview, holes, scores, courseHandicap, onChange, onI
         {imagePreview ? (
           <div className="image-preview-wrapper">
             <img src={imagePreview} alt="スコアカード" className="scorecard-image" />
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => fileRef.current?.click()}
-            >
-              画像を変更
-            </button>
+            <div className="image-change-btns">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => cameraRef.current?.click()}
+              >
+                📷 カメラで撮影
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => libraryRef.current?.click()}
+              >
+                🖼️ ライブラリから選択
+              </button>
+            </div>
           </div>
         ) : (
-          <button
-            type="button"
-            className="upload-btn"
-            onClick={() => fileRef.current?.click()}
-          >
-            <span className="upload-icon">📷</span>
-            <span>スコアカード画像を選択</span>
-            <small>JPG / PNG / HEIC</small>
-          </button>
+          <div className="upload-options">
+            <button
+              type="button"
+              className="upload-btn"
+              onClick={() => cameraRef.current?.click()}
+            >
+              <span className="upload-icon">📷</span>
+              <span>カメラで撮影</span>
+            </button>
+            <button
+              type="button"
+              className="upload-btn"
+              onClick={() => libraryRef.current?.click()}
+            >
+              <span className="upload-icon">🖼️</span>
+              <span>ライブラリから選択</span>
+              <small>カメラロール・スクリーンショット</small>
+            </button>
+          </div>
         )}
+        {/* カメラ直接撮影用 */}
         <input
-          ref={fileRef}
+          ref={cameraRef}
           type="file"
           accept="image/*"
           capture="environment"
+          onChange={onImageChange}
+          style={{ display: 'none' }}
+        />
+        {/* フォトライブラリ・ファイル選択用（capture属性なし） */}
+        <input
+          ref={libraryRef}
+          type="file"
+          accept="image/*"
           onChange={onImageChange}
           style={{ display: 'none' }}
         />

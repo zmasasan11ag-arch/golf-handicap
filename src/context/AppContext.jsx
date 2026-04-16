@@ -62,6 +62,18 @@ export function AppProvider({ children }) {
     return calcHandicapIndex(differentials)
   }, [processedRounds])
 
+  // 競技成績のみを使ったハンデキャップインデックス
+  const competitionRoundCount = useMemo(() => {
+    return processedRounds.filter(r => r.isCompetition).length
+  }, [processedRounds])
+
+  const competitionHandicapIndex = useMemo(() => {
+    const compRounds = processedRounds.filter(r => r.isCompetition)
+    if (compRounds.length < 3) return null
+    const diffs = compRounds.map(r => r.differential)
+    return calcHandicapIndex(diffs)
+  }, [processedRounds])
+
   function addRound(roundData) {
     const newRound = {
       ...roundData,
@@ -98,6 +110,8 @@ export function AppProvider({ children }) {
     <AppContext.Provider value={{
       rounds: sortedRounds,
       handicapIndex,
+      competitionHandicapIndex,
+      competitionRoundCount,
       courses,
       addRound,
       updateRound,

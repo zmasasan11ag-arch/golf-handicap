@@ -5,6 +5,7 @@ const navItems = [
   { to: '/', label: 'ホーム', icon: '🏠' },
   { to: '/rounds', label: 'ラウンド', icon: '📋' },
   { to: '/rounds/new', label: '追加', icon: '➕' },
+  { to: '/analysis', label: '分析', icon: '📊' },
   { to: '/guide', label: 'ガイド', icon: '📖' },
   { to: '/settings', label: '設定', icon: '⚙️' },
 ]

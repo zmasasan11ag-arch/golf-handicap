@@ -5,7 +5,7 @@ import { WHS_TABLE } from '../utils/handicapCalc.js'
 import { findTee } from '../data/courses.js'
 
 export default function Dashboard() {
-  const { rounds, handicapIndex, courses } = useApp()
+  const { rounds, handicapIndex, competitionHandicapIndex, competitionRoundCount, courses } = useApp()
 
   const recentRounds = rounds.slice(0, 5)
   const recent20     = rounds.slice(0, 20)  // 直近20ラウンド（日付降順）
@@ -46,7 +46,24 @@ export default function Dashboard() {
       {/* ── ハンデキャップインデックスカード ── */}
       <div className={`hi-card ${hiClass}`}>
         <div className="hi-label">ハンデキャップインデックス</div>
-        <div className="hi-value">{hiDisplay}</div>
+        <div className="hi-dual">
+          <div className="hi-dual-item">
+            <div className="hi-dual-sublabel">通常</div>
+            <div className="hi-value">{hiDisplay}</div>
+          </div>
+          <div className="hi-dual-divider" />
+          <div className="hi-dual-item">
+            <div className="hi-dual-sublabel">競技</div>
+            <div className="hi-value hi-comp-value">
+              {competitionHandicapIndex !== null
+                ? competitionHandicapIndex.toFixed(1)
+                : competitionRoundCount < 3
+                  ? <span className="hi-comp-insufficient">データ不足<small>({competitionRoundCount}戦)</small></span>
+                  : '--.-'
+              }
+            </div>
+          </div>
+        </div>
         {handicapIndex !== null && (
           <div className="hi-meta">
             直近{n}ラウンド中 ベスト{usedCount}個から計算
