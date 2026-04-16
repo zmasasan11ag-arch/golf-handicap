@@ -6,6 +6,7 @@ const navItems = [
   { to: '/rounds', label: 'ラウンド', icon: '📋' },
   { to: '/rounds/new', label: '追加', icon: '➕' },
   { to: '/guide', label: 'ガイド', icon: '📖' },
+  { to: '/settings', label: '設定', icon: '⚙️' },
 ]
 
 export default function Navigation() {

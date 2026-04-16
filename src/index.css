@@ -928,3 +928,76 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   .app-container { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
   .bottom-nav { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
 }
+
+/* =================== 設定ページ =================== */
+.settings-section { padding: 0 16px 32px; }
+.settings-title { font-size: 15px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; margin-top: 24px; }
+.settings-desc  { font-size: 14px; color: var(--text-sub); margin-bottom: 16px; line-height: 1.5; }
+
+.settings-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.settings-label { font-size: 13px; font-weight: 700; color: var(--green-dark); margin-bottom: 8px; }
+.settings-note  { font-size: 12px; color: #e07b00; margin-bottom: 8px; line-height: 1.4; }
+.settings-error { font-size: 13px; color: #e53935; margin-top: 6px; }
+
+.uid-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.uid-text {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  background: var(--green-pale);
+  color: var(--green-dark);
+  padding: 6px 10px;
+  border-radius: 6px;
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+.sync-status { font-size: 12px; margin-top: 6px; }
+
+.uid-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.uid-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-width: 0;
+}
+.uid-input:focus { outline: none; border-color: var(--green-mid); box-shadow: 0 0 0 2px rgba(46,125,50,.15); }
+.uid-input::placeholder { color: var(--text-sub); opacity: .6; }
+
+/* 確認ダイアログ */
+.confirm-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+.confirm-dialog {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: var(--shadow-md);
+}
+.confirm-dialog p { font-size: 14px; margin-bottom: 8px; }
+.confirm-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
