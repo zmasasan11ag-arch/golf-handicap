@@ -34,6 +34,8 @@ export default function RoundForm() {
   const [memo,          setMemo]          = useState(existingRound?.memo       || '')
   const [isCompetition, setIsCompetition] = useState(existingRound?.isCompetition || false)
   const [imagePreview,  setImagePreview]  = useState(existingRound?.imageDataUrl || null)
+  const [analyzing,     setAnalyzing]     = useState(false)
+  const [analysisStatus, setAnalysisStatus] = useState(null) // null | { type: 'ok' } | { type: 'error', message: string }
 
   const course = courses.find(c => c.id === courseId)
   const green  = course?.greens?.find(g => g.id === greenId)
@@ -79,8 +81,56 @@ export default function RoundForm() {
     const file = e.target.files[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = ev => setImagePreview(ev.target.result)
+    reader.onload = async ev => {
+      const originalDataUrl = ev.target.result
+      setImagePreview(originalDataUrl)
+      setAnalysisStatus(null)
+      setAnalyzing(true)
+      try {
+        // 大きな画像はリサイズしてからAPIへ送信（Vercel 4.5MB制限対策）
+        const resized = await resizeImageForApi(originalDataUrl)
+        const res = await fetch('/api/analyze-scorecard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageDataUrl: resized }),
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error || 'AI解析に失敗しました')
+        if (json.scores?.length === 18) {
+          setScores(json.scores.map(s => (s > 0 ? s : '')))
+          setAnalysisStatus({ type: 'ok' })
+        } else {
+          throw new Error('18ホール分のスコアを読み取れませんでした')
+        }
+      } catch (err) {
+        setAnalysisStatus({ type: 'error', message: err.message })
+      } finally {
+        setAnalyzing(false)
+      }
+    }
     reader.readAsDataURL(file)
+  }
+
+  /** 画像をJPEG・最大1920pxにリサイズしてAPIサイズ制限に対応 */
+  async function resizeImageForApi(dataUrl, maxDim = 1920, quality = 0.85) {
+    return new Promise(resolve => {
+      const img = new Image()
+      img.onload = () => {
+        let { width, height } = img
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height)
+          width  = Math.floor(width  * ratio)
+          height = Math.floor(height * ratio)
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width  = width
+        canvas.height = height
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.onerror = () => resolve(dataUrl) // リサイズ失敗時は元データをそのまま使用
+      img.src = dataUrl
+    })
   }
 
   function validate() {
@@ -273,6 +323,8 @@ export default function RoundForm() {
               onChange={handleScoreChange}
               onImageChange={handleImageChange}
               total={holeTotal}
+              analyzing={analyzing}
+              analysisStatus={analysisStatus}
             />
           )}
         </section>
@@ -452,9 +504,9 @@ function TotalInput({ grossScore, onChange, par }) {
 }
 
 /* ──────────────────────────────────────────────
-   画像読み取り入力
+   画像読み取り入力（AI自動解析付き）
    ────────────────────────────────────────────── */
-function ImageInput({ imagePreview, holes, scores, courseHandicap, onChange, onImageChange, total }) {
+function ImageInput({ imagePreview, holes, scores, courseHandicap, onChange, onImageChange, total, analyzing, analysisStatus }) {
   const cameraRef  = useRef(null)
   const libraryRef = useRef(null)
 
@@ -469,6 +521,7 @@ function ImageInput({ imagePreview, holes, scores, courseHandicap, onChange, onI
                 type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={() => cameraRef.current?.click()}
+                disabled={analyzing}
               >
                 📷 カメラで撮影
               </button>
@@ -476,6 +529,7 @@ function ImageInput({ imagePreview, holes, scores, courseHandicap, onChange, onI
                 type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={() => libraryRef.current?.click()}
+                disabled={analyzing}
               >
                 🖼️ ライブラリから選択
               </button>
@@ -521,17 +575,39 @@ function ImageInput({ imagePreview, holes, scores, courseHandicap, onChange, onI
         />
       </div>
 
-      <div className="info-box">
-        画像を確認しながら、スコアを入力してください。
-      </div>
+      {/* AI解析ステータス表示 */}
+      {analyzing && (
+        <div className="analysis-loading">
+          <span className="analysis-spinner" />
+          AIがスコアカードを解析中...
+        </div>
+      )}
+      {!analyzing && analysisStatus?.type === 'ok' && (
+        <div className="analysis-status ok">
+          ✓ AIが18ホールのスコアを自動読み取りしました。内容を確認し、必要であれば修正してください。
+        </div>
+      )}
+      {!analyzing && analysisStatus?.type === 'error' && (
+        <div className="analysis-status error">
+          ⚠ 自動読み取り失敗: {analysisStatus.message}<br />
+          <small>手動でスコアを入力してください。</small>
+        </div>
+      )}
+      {!analyzing && !analysisStatus && imagePreview && (
+        <div className="info-box">
+          画像を確認しながら、スコアを入力してください。
+        </div>
+      )}
 
-      <HoleByHoleInput
-        holes={holes}
-        scores={scores}
-        courseHandicap={courseHandicap}
-        onChange={onChange}
-        total={total}
-      />
+      {imagePreview && (
+        <HoleByHoleInput
+          holes={holes}
+          scores={scores}
+          courseHandicap={courseHandicap}
+          onChange={onChange}
+          total={total}
+        />
+      )}
     </div>
   )
 }

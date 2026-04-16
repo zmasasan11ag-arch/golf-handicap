@@ -923,6 +923,61 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 .diff-row-used .diff-col-value { color: #e65100; }
 .diff-col-check { text-align: center; font-size: 14px; color: #f57c00; font-weight: 700; }
 
+/* =================== AI解析ステータス =================== */
+.analysis-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 8px;
+  border-left: 3px solid #1976d2;
+}
+
+.analysis-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #90caf9;
+  border-top-color: #1565c0;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.analysis-status {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.analysis-status.ok {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-left: 3px solid #4caf50;
+  font-weight: 600;
+}
+
+.analysis-status.error {
+  background: #ffebee;
+  color: #c62828;
+  border-left: 3px solid #ef9a9a;
+}
+
+.analysis-status.error small {
+  font-weight: 400;
+  opacity: .8;
+}
+
 /* =================== 競技バッジ =================== */
 .competition-badge {
   font-size: 10px;
