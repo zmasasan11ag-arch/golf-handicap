@@ -1116,6 +1116,89 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   font-size: 12px;
 }
 
+/* =================== par別統計カード =================== */
+.par-cards-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.par-card {
+  flex: 1;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 12px 10px;
+  box-shadow: var(--shadow);
+  border: 2px solid transparent;
+  min-width: 0;
+}
+
+.par-card-best  { border-color: #4caf50; }
+.par-card-worst { border-color: #ef9a9a; }
+
+.par-card-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.par-card-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-sub);
+  flex: 1;
+}
+
+.par-card-holes {
+  font-size: 10px;
+  color: var(--text-sub);
+}
+
+.par-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 20px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.par-badge.best  { background: #e8f5e9; color: #2e7d32; }
+.par-badge.worst { background: #ffebee; color: #c62828; }
+
+.par-card-avg {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.par-card-meta {
+  font-size: 10px;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+}
+
+.par-dist-bar {
+  height: 7px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  margin-bottom: 5px;
+  background: var(--border);
+}
+
+.par-dist-segment { height: 100%; }
+
+.par-dist-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
 /* =================== レスポンシブ調整 =================== */
 @media (min-width: 600px) {
   .app-container { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }

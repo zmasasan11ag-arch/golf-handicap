@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext.jsx'
-import { getScoreCategory } from '../utils/handicapCalc.js'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
+  ResponsiveContainer, Cell, ReferenceLine,
 } from 'recharts'
 
 // スコア色（index.css の変数に合わせる）
@@ -24,22 +23,43 @@ const DIST_LABELS = [
 ]
 
 function getAvgCategory(avgDiff) {
-  if (avgDiff <= -0.5)  return 'birdie'
-  if (avgDiff <=  0.4)  return 'par'
-  if (avgDiff <=  1.4)  return 'bogey'
-  if (avgDiff <=  2.4)  return 'double'
+  if (avgDiff <= -0.3)  return 'birdie'
+  if (avgDiff <=  0.3)  return 'par'
+  if (avgDiff <=  1.3)  return 'bogey'
+  if (avgDiff <=  2.3)  return 'double'
   return 'triple'
+}
+
+/** ホール番号 + par を2段で表示するカスタムXTick */
+function makeXTick(holeStats) {
+  return function CustomXTick({ x, y, payload }) {
+    const hole = holeStats?.find(h => h.hole === payload.value)
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text dy={12} textAnchor="middle" fontSize={11} fill="#555">{payload.value}</text>
+        <text dy={24} textAnchor="middle" fontSize={9} fill="#aaa">P{hole?.par}</text>
+      </g>
+    )
+  }
 }
 
 const CustomAvgTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   const d = payload[0]?.payload
   if (!d) return null
-  const sign = d.avgDiff >= 0 ? '+' : ''
+  const sign   = d.avgDiff >= 0 ? '+' : ''
+  const cat    = getAvgCategory(d.avgDiff)
+  const catLabel = {
+    birdie: 'バーディ相当', par: 'パー相当',
+    bogey:  'ボギー相当',   double: 'ダブル相当', triple: 'トリプル以上',
+  }[cat]
   return (
     <div className="chart-tooltip">
-      <div className="chart-tooltip-title">{label}番ホール (par{d.par})</div>
-      <div>平均: <strong>{d.avg}</strong> ({sign}{d.avgDiff})</div>
+      <div className="chart-tooltip-title">{label}番ホール (Par{d.par})</div>
+      <div>平均: <strong>{d.avg}打</strong></div>
+      <div style={{ color: CATEGORY_COLORS[cat] }}>
+        差分: <strong>{sign}{d.avgDiff}</strong>（{catLabel}）
+      </div>
     </div>
   )
 }
@@ -49,15 +69,72 @@ const CustomDistTooltip = ({ active, payload, label }) => {
   return (
     <div className="chart-tooltip">
       <div className="chart-tooltip-title">{label}番ホール</div>
-      {payload.map(p => (
-        <div key={p.dataKey} style={{ color: p.fill }}>
-          {DIST_LABELS.find(d => d.key === p.dataKey)?.label}: <strong>{p.value}%</strong>
-        </div>
+      {[...payload].reverse().map(p => (
+        p.value > 0 && (
+          <div key={p.dataKey} style={{ color: p.fill }}>
+            {DIST_LABELS.find(d => d.key === p.dataKey)?.label}: <strong>{p.value}%</strong>
+          </div>
+        )
       ))}
     </div>
   )
 }
 
+/** par3/4/5 別カード */
+function ParCard({ data, isBest, isWorst }) {
+  const sign  = data.avgDiff >= 0 ? '+' : ''
+  const cat   = getAvgCategory(data.avgDiff)
+  const color = CATEGORY_COLORS[cat]
+  const roundsPerHole = data.holeCount > 0 ? Math.round(data.count / data.holeCount) : 0
+
+  return (
+    <div className={`par-card${isBest ? ' par-card-best' : ''}${isWorst ? ' par-card-worst' : ''}`}>
+      <div className="par-card-header">
+        <span className="par-card-label">Par {data.par}</span>
+        <span className="par-card-holes">{data.holeCount}H</span>
+        {isBest && <span className="par-badge best">得意</span>}
+        {isWorst && <span className="par-badge worst">苦手</span>}
+      </div>
+      <div className="par-card-avg" style={{ color }}>
+        {sign}{data.avgDiff.toFixed(2)}
+      </div>
+      <div className="par-card-meta">{roundsPerHole}ラウンド平均</div>
+
+      {/* 分布バー */}
+      <div className="par-dist-bar">
+        {DIST_LABELS.map(d =>
+          data[d.key] > 0 && (
+            <div
+              key={d.key}
+              className="par-dist-segment"
+              style={{ flex: data[d.key], background: d.color }}
+              title={`${d.label}: ${data[d.key]}%`}
+            />
+          )
+        )}
+      </div>
+
+      {/* 分布テキスト */}
+      <div className="par-dist-detail">
+        {DIST_LABELS.map(d =>
+          data[d.key] > 0 && (
+            <span key={d.key} style={{ color: d.color }}>
+              {d.label.charAt(0) === 'バ' ? 'B' :
+               d.label.charAt(0) === 'パ' ? 'P' :
+               d.label.charAt(0) === 'ボ' ? '1' :
+               d.label.charAt(0) === 'ダ' ? '2' : '3+'}
+              {data[d.key]}%
+            </span>
+          )
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ════════════════════════════════════════════════════
+   メインコンポーネント
+   ════════════════════════════════════════════════════ */
 export default function Analysis() {
   const { rounds, courses } = useApp()
 
@@ -82,13 +159,12 @@ export default function Analysis() {
 
   const availableTees = useMemo(() => {
     if (!filterCourseId) return []
-    const greenObj = filterGreenId ? selectedGreen : null
     const courseRounds = rounds.filter(r =>
       r.courseId === filterCourseId && (!filterGreenId || r.greenId === filterGreenId)
     )
-    const ids = new Set(courseRounds.map(r => r.teeId).filter(Boolean))
-    const teeList = greenObj
-      ? greenObj.tees
+    const ids     = new Set(courseRounds.map(r => r.teeId).filter(Boolean))
+    const teeList = filterGreenId && selectedGreen
+      ? selectedGreen.tees
       : selectedCourse?.greens?.flatMap(g => g.tees) ?? []
     return teeList.filter(t => ids.has(t.id))
   }, [rounds, filterCourseId, filterGreenId, selectedCourse, selectedGreen])
@@ -101,7 +177,6 @@ export default function Analysis() {
     return true
   }), [rounds, filterCourseId, filterGreenId, filterTeeId])
 
-  // ホールスコアがあるラウンドのみ
   const holeRounds = useMemo(
     () => filteredRounds.filter(r => r.scores?.length === 18),
     [filteredRounds]
@@ -113,7 +188,7 @@ export default function Analysis() {
     const grossList = filteredRounds.map(r => r.grossScore)
     const diffList  = filteredRounds.map(r => r.differential).filter(d => d != null)
     return {
-      count:   filteredRounds.length,
+      count:    filteredRounds.length,
       avgGross: (grossList.reduce((s, v) => s + v, 0) / grossList.length).toFixed(1),
       avgDiff:  diffList.length > 0
         ? (diffList.reduce((s, v) => s + v, 0) / diffList.length).toFixed(1)
@@ -133,14 +208,12 @@ export default function Analysis() {
       const hScores = holeRounds.map(r => r.scores[i]).filter(s => s > 0)
       if (hScores.length === 0) return null
 
-      const avg    = hScores.reduce((s, v) => s + v, 0) / hScores.length
-      const avgRnd = Math.round(avg * 10) / 10
-
-      let birdie = 0, par = 0, bogey = 0, double_ = 0, triple = 0
+      const avg = hScores.reduce((s, v) => s + v, 0) / hScores.length
+      let birdie = 0, parCnt = 0, bogey = 0, double_ = 0, triple = 0
       hScores.forEach(s => {
         const d = s - hole.par
-        if (d <= -1)     birdie++
-        else if (d === 0) par++
+        if (d <= -1)      birdie++
+        else if (d === 0) parCnt++
         else if (d === 1) bogey++
         else if (d === 2) double_++
         else              triple++
@@ -151,16 +224,78 @@ export default function Analysis() {
       return {
         hole:        hole.number,
         par:         hole.par,
-        avg:         avgRnd,
-        avgDiff:     Math.round((avg - hole.par) * 10) / 10,
+        avg:         Math.round(avg * 10) / 10,
+        avgDiff:     Math.round((avg - hole.par) * 100) / 100,
         birdieRate:  pct(birdie),
-        parRate:     pct(par),
+        parRate:     pct(parCnt),
         bogeyRate:   pct(bogey),
         doubleRate:  pct(double_),
         tripleRate:  pct(triple),
       }
     }).filter(Boolean)
   }, [filterCourseId, holeRounds, courses])
+
+  // ── par別統計 ──
+  const parStats = useMemo(() => {
+    if (!filterCourseId || holeRounds.length < 3) return null
+    const course = courses.find(c => c.id === filterCourseId)
+    if (!course) return null
+
+    const buckets = { 3: [], 4: [], 5: [] }
+    course.holes.forEach((hole, i) => {
+      if (!(hole.par in buckets)) return
+      holeRounds.forEach(r => {
+        const s = r.scores[i]
+        if (s > 0) buckets[hole.par].push(s - hole.par)
+      })
+    })
+
+    const result = [3, 4, 5].map(par => {
+      const diffs = buckets[par]
+      if (diffs.length === 0) return null
+      const avgDiff = diffs.reduce((s, v) => s + v, 0) / diffs.length
+      const holeCount = course.holes.filter(h => h.par === par).length
+
+      let birdie = 0, parCnt = 0, bogey = 0, double_ = 0, triple = 0
+      diffs.forEach(d => {
+        if (d <= -1)      birdie++
+        else if (d === 0) parCnt++
+        else if (d === 1) bogey++
+        else if (d === 2) double_++
+        else              triple++
+      })
+      const total = diffs.length
+      const pct   = v => Math.round(v / total * 100)
+
+      return {
+        par,
+        avgDiff:    Math.round(avgDiff * 100) / 100,
+        count:      total,
+        holeCount,
+        birdieRate: pct(birdie),
+        parRate:    pct(parCnt),
+        bogeyRate:  pct(bogey),
+        doubleRate: pct(double_),
+        tripleRate: pct(triple),
+      }
+    }).filter(Boolean)
+
+    // 得意・苦手の判定
+    if (result.length < 2) return result
+    const sorted    = [...result].sort((a, b) => a.avgDiff - b.avgDiff)
+    const bestPar   = sorted[0].par
+    const worstPar  = sorted[sorted.length - 1].par
+    return result.map(r => ({ ...r, isBest: r.par === bestPar, isWorst: r.par === worstPar }))
+  }, [filterCourseId, holeRounds, courses])
+
+  // Y軸domain（差分チャート用、0を含む）
+  const avgDiffDomain = useMemo(() => {
+    if (!holeStats) return [-1, 3]
+    const diffs = holeStats.map(h => h.avgDiff)
+    const minV  = Math.min(...diffs, 0)
+    const maxV  = Math.max(...diffs, 0)
+    return [Math.floor(minV - 0.3), Math.ceil(maxV + 0.3)]
+  }, [holeStats])
 
   const handleCourseChange = v => { setFilterCourseId(v); setFilterGreenId(''); setFilterTeeId('') }
   const handleGreenChange  = v => { setFilterGreenId(v);  setFilterTeeId('') }
@@ -179,9 +314,7 @@ export default function Analysis() {
           <label>コース</label>
           <select value={filterCourseId} onChange={e => handleCourseChange(e.target.value)} className="form-input">
             <option value="">すべてのコース</option>
-            {availableCourses.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
+            {availableCourses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
 
@@ -190,9 +323,7 @@ export default function Analysis() {
             <label>グリーン</label>
             <select value={filterGreenId} onChange={e => handleGreenChange(e.target.value)} className="form-input">
               <option value="">すべてのグリーン</option>
-              {availableGreens.map(g => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
+              {availableGreens.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
         )}
@@ -202,15 +333,12 @@ export default function Analysis() {
             <label>ティー</label>
             <select value={filterTeeId} onChange={e => setFilterTeeId(e.target.value)} className="form-input">
               <option value="">すべてのティー</option>
-              {availableTees.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
+              {availableTees.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </div>
         )}
       </section>
 
-      {/* ── データ不足 ── */}
       {filteredRounds.length < 3 ? (
         <div className="empty-state">
           <p>データが不足しています</p>
@@ -246,92 +374,147 @@ export default function Analysis() {
             </div>
           </section>
 
-          {/* ── ホール別統計 ── */}
+          {/* ── ホール別統計（コース選択が必要） ── */}
           {!filterCourseId ? (
             <div className="info-box">
-              コースを選択するとホール別統計が表示されます
+              コースを選択するとホール別・par別統計が表示されます
             </div>
           ) : holeRounds.length < 3 ? (
             <div className="info-box warning">
               ホール別統計にはホールごと入力で3ラウンド以上必要です（現在{holeRounds.length}ラウンド）
             </div>
-          ) : holeStats && (
+          ) : (
             <>
-              {/* ホール別平均スコア */}
-              <section className="section">
-                <div className="section-header">
-                  <h2>ホール別平均スコア</h2>
-                </div>
-                <div className="chart-card">
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={holeStats} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="hole" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} domain={['auto', 'auto']} />
-                      <Tooltip content={<CustomAvgTooltip />} />
-                      <Bar dataKey="avg" name="平均スコア" radius={[3, 3, 0, 0]}>
-                        {holeStats.map((entry, idx) => (
-                          <Cell
-                            key={idx}
-                            fill={CATEGORY_COLORS[getAvgCategory(entry.avgDiff)] ?? '#999'}
-                          />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-
-                  <div className="chart-legend">
+              {/* ── par別統計 ── */}
+              {parStats && parStats.length > 0 && (
+                <section className="section">
+                  <div className="section-header">
+                    <h2>par別統計</h2>
+                    <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>平均スコア差分</span>
+                  </div>
+                  <div className="par-cards-row">
+                    {parStats.map(d => (
+                      <ParCard key={d.par} data={d} isBest={d.isBest} isWorst={d.isWorst} />
+                    ))}
+                  </div>
+                  <div className="chart-legend" style={{ marginTop: 0 }}>
                     {[
-                      { cat: 'birdie', label: 'バーディ以下' },
-                      { cat: 'par',    label: 'パー相当' },
-                      { cat: 'bogey',  label: 'ボギー相当' },
-                      { cat: 'double', label: 'ダブル相当' },
-                      { cat: 'triple', label: 'トリプル以上' },
-                    ].map(({ cat, label }) => (
-                      <div key={cat} className="chart-legend-item">
-                        <div style={{ width: 12, height: 12, borderRadius: 2, background: CATEGORY_COLORS[cat], flexShrink: 0 }} />
-                        <span>{label}</span>
+                      { label: 'B', full: 'バーディ以下', color: CATEGORY_COLORS.birdie },
+                      { label: 'P', full: 'パー',         color: CATEGORY_COLORS.par    },
+                      { label: '1', full: 'ボギー',       color: CATEGORY_COLORS.bogey  },
+                      { label: '2', full: 'ダブルボギー', color: CATEGORY_COLORS.double },
+                      { label: '3+',full: 'トリプル以上', color: CATEGORY_COLORS.triple },
+                    ].map(item => (
+                      <div key={item.label} className="chart-legend-item">
+                        <div style={{ width: 12, height: 12, borderRadius: 2, background: item.color, flexShrink: 0 }} />
+                        <span>{item.label}={item.full}</span>
                       </div>
                     ))}
                   </div>
-                </div>
-              </section>
+                </section>
+              )}
 
-              {/* ホール別スコア分布 */}
-              <section className="section">
-                <div className="section-header">
-                  <h2>ホール別スコア分布</h2>
-                </div>
-                <div className="chart-card">
-                  <ResponsiveContainer width="100%" height={220}>
-                    <BarChart data={holeStats} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="hole" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
-                      <Tooltip content={<CustomDistTooltip />} />
-                      {DIST_LABELS.map((d, idx) => (
-                        <Bar
-                          key={d.key}
-                          dataKey={d.key}
-                          stackId="dist"
-                          name={d.label}
-                          fill={d.color}
-                          radius={idx === DIST_LABELS.length - 1 ? [3, 3, 0, 0] : undefined}
-                        />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
+              {holeStats && (
+                <>
+                  {/* ── ホール別平均スコア差分グラフ ── */}
+                  <section className="section">
+                    <div className="section-header">
+                      <h2>ホール別平均スコア差分</h2>
+                      <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>0=パー基準</span>
+                    </div>
+                    <div className="chart-card">
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart
+                          data={holeStats}
+                          margin={{ top: 10, right: 5, bottom: 28, left: -10 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis
+                            dataKey="hole"
+                            tick={makeXTick(holeStats)}
+                            height={38}
+                            interval={0}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 11 }}
+                            domain={avgDiffDomain}
+                            tickFormatter={v => v >= 0 ? `+${v}` : `${v}`}
+                          />
+                          <ReferenceLine y={0} stroke="#888" strokeWidth={1.5} />
+                          <Tooltip content={<CustomAvgTooltip />} />
+                          <Bar dataKey="avgDiff" name="平均差分" radius={[3, 3, 0, 0]}>
+                            {holeStats.map((entry, idx) => (
+                              <Cell
+                                key={idx}
+                                fill={CATEGORY_COLORS[getAvgCategory(entry.avgDiff)]}
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
 
-                  <div className="chart-legend">
-                    {DIST_LABELS.map(d => (
-                      <div key={d.key} className="chart-legend-item">
-                        <div style={{ width: 12, height: 12, borderRadius: 2, background: d.color, flexShrink: 0 }} />
-                        <span>{d.label}</span>
+                      <div className="chart-legend">
+                        {[
+                          { cat: 'birdie', label: 'バーディ以下（マイナス）' },
+                          { cat: 'par',    label: 'パー（±0前後）' },
+                          { cat: 'bogey',  label: 'ボギー相当（+1前後）' },
+                          { cat: 'double', label: 'ダブル相当（+2前後）' },
+                          { cat: 'triple', label: 'トリプル以上（+3〜）' },
+                        ].map(({ cat, label }) => (
+                          <div key={cat} className="chart-legend-item">
+                            <div style={{ width: 12, height: 12, borderRadius: 2, background: CATEGORY_COLORS[cat], flexShrink: 0 }} />
+                            <span>{label}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
+                    </div>
+                  </section>
+
+                  {/* ── ホール別スコア分布 ── */}
+                  <section className="section">
+                    <div className="section-header">
+                      <h2>ホール別スコア分布</h2>
+                    </div>
+                    <div className="chart-card">
+                      <ResponsiveContainer width="100%" height={230}>
+                        <BarChart
+                          data={holeStats}
+                          margin={{ top: 5, right: 5, bottom: 28, left: -10 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis
+                            dataKey="hole"
+                            tick={makeXTick(holeStats)}
+                            height={38}
+                            interval={0}
+                          />
+                          <YAxis tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
+                          <Tooltip content={<CustomDistTooltip />} />
+                          {DIST_LABELS.map((d, idx) => (
+                            <Bar
+                              key={d.key}
+                              dataKey={d.key}
+                              stackId="dist"
+                              name={d.label}
+                              fill={d.color}
+                              radius={idx === DIST_LABELS.length - 1 ? [3, 3, 0, 0] : undefined}
+                            />
+                          ))}
+                        </BarChart>
+                      </ResponsiveContainer>
+
+                      <div className="chart-legend">
+                        {DIST_LABELS.map(d => (
+                          <div key={d.key} className="chart-legend-item">
+                            <div style={{ width: 12, height: 12, borderRadius: 2, background: d.color, flexShrink: 0 }} />
+                            <span>{d.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+                </>
+              )}
             </>
           )}
         </>
