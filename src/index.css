@@ -653,6 +653,32 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 
 .total-score { font-size: 24px; color: var(--green-dark); }
 
+/* ── ハーフ一括入力ボタン ── */
+.bulk-fill-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  padding-left: 46px; /* hg-label 幅分インデント */
+}
+
+.btn-bulk-fill {
+  flex: 1;
+  padding: 5px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green-dark);
+  background: var(--green-pale);
+  border: 1px solid var(--green-mid);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+.btn-bulk-fill:active {
+  background: var(--green-mid);
+  color: #fff;
+}
+
 /* =================== 合計スコア入力 =================== */
 .score-total-input {
   font-size: 28px !important;

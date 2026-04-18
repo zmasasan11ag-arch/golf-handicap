@@ -77,6 +77,18 @@ export default function RoundForm() {
     setScores(arr)
   }
 
+  function handleBulkFill(startIndex, endIndex, mode) {
+    if (!course) return
+    setScores(prev => {
+      const arr = [...prev]
+      for (let i = startIndex; i < endIndex; i++) {
+        const hole = course.holes[i]
+        arr[i] = mode === 'par' ? hole.par : hole.par + 1
+      }
+      return arr
+    })
+  }
+
   function handleImageChange(e) {
     const file = e.target.files[0]
     if (!file) return
@@ -302,6 +314,7 @@ export default function RoundForm() {
               scores={scores}
               courseHandicap={courseHandicap}
               onChange={handleScoreChange}
+              onBulkFill={handleBulkFill}
               total={holeTotal}
             />
           )}
@@ -321,6 +334,7 @@ export default function RoundForm() {
               scores={scores}
               courseHandicap={courseHandicap}
               onChange={handleScoreChange}
+              onBulkFill={handleBulkFill}
               onImageChange={handleImageChange}
               total={holeTotal}
               analyzing={analyzing}
@@ -354,7 +368,7 @@ export default function RoundForm() {
 /* ──────────────────────────────────────────────
    ホールごと入力（18ホール一覧、Tab/Enterで連続移動）
    ────────────────────────────────────────────── */
-function HoleByHoleInput({ holes, scores, courseHandicap, onChange, total }) {
+function HoleByHoleInput({ holes, scores, courseHandicap, onChange, onBulkFill, total }) {
   const inputRefs = useRef([])
 
   function handleKeyDown(e, index) {
@@ -380,6 +394,7 @@ function HoleByHoleInput({ holes, scores, courseHandicap, onChange, total }) {
         baseIndex={0}
         courseHandicap={courseHandicap}
         onChange={onChange}
+        onBulkFill={onBulkFill ? (mode) => onBulkFill(0, 9, mode) : null}
         onKeyDown={handleKeyDown}
         inputRefs={inputRefs}
         label="OUT"
@@ -392,6 +407,7 @@ function HoleByHoleInput({ holes, scores, courseHandicap, onChange, total }) {
         baseIndex={9}
         courseHandicap={courseHandicap}
         onChange={onChange}
+        onBulkFill={onBulkFill ? (mode) => onBulkFill(9, 18, mode) : null}
         onKeyDown={handleKeyDown}
         inputRefs={inputRefs}
         label="IN"
@@ -406,7 +422,7 @@ function HoleByHoleInput({ holes, scores, courseHandicap, onChange, total }) {
   )
 }
 
-function ScoreGrid({ holes, scores, baseIndex, courseHandicap, onChange, onKeyDown, inputRefs, label, parTotal, scoreTotal }) {
+function ScoreGrid({ holes, scores, baseIndex, courseHandicap, onChange, onBulkFill, onKeyDown, inputRefs, label, parTotal, scoreTotal }) {
   return (
     <div className="nine-hole-grid">
 
@@ -455,6 +471,7 @@ function ScoreGrid({ holes, scores, baseIndex, courseHandicap, onChange, onKeyDo
                 onChange={e => onChange(globalIdx, e.target.value)}
                 onKeyDown={e => onKeyDown(e, globalIdx)}
                 onFocus={e => e.target.select()}
+                onClick={() => { if (val !== '') onChange(globalIdx, '') }}
                 className={`score-grid-input${cat ? ` sg-${cat}` : ''}`}
                 placeholder="-"
                 aria-label={`${h.number}番ホール スコア`}
@@ -464,6 +481,26 @@ function ScoreGrid({ holes, scores, baseIndex, courseHandicap, onChange, onKeyDo
         })}
         <div className="hg-total">{scoreTotal > 0 ? scoreTotal : '--'}</div>
       </div>
+
+      {/* 一括入力ボタン */}
+      {onBulkFill && (
+        <div className="bulk-fill-row">
+          <button
+            type="button"
+            className="btn-bulk-fill"
+            onClick={() => onBulkFill('par')}
+          >
+            全パー
+          </button>
+          <button
+            type="button"
+            className="btn-bulk-fill"
+            onClick={() => onBulkFill('bogey')}
+          >
+            全ボギー
+          </button>
+        </div>
+      )}
 
     </div>
   )
@@ -506,7 +543,7 @@ function TotalInput({ grossScore, onChange, par }) {
 /* ──────────────────────────────────────────────
    画像読み取り入力（AI自動解析付き）
    ────────────────────────────────────────────── */
-function ImageInput({ imagePreview, holes, scores, courseHandicap, onChange, onImageChange, total, analyzing, analysisStatus }) {
+function ImageInput({ imagePreview, holes, scores, courseHandicap, onChange, onBulkFill, onImageChange, total, analyzing, analysisStatus }) {
   const cameraRef  = useRef(null)
   const libraryRef = useRef(null)
 
@@ -605,6 +642,7 @@ function ImageInput({ imagePreview, holes, scores, courseHandicap, onChange, onI
           scores={scores}
           courseHandicap={courseHandicap}
           onChange={onChange}
+          onBulkFill={onBulkFill}
           total={total}
         />
       )}
