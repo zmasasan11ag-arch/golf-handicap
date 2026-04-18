@@ -7,11 +7,12 @@ import {
 
 // スコア色（index.css の変数に合わせる）
 const CATEGORY_COLORS = {
-  birdie:  '#ef6c00',
-  par:     '#4dd0e1',
-  bogey:   '#1a237e',
-  double:  '#2e7d32',
-  triple:  '#212121',
+  eagle:   '#e53935',  // 赤（マイナス平均）
+  birdie:  '#ef6c00',  // オレンジ（0〜+0.5未満）
+  par:     '#4dd0e1',  // 水色（+0.5〜+1未満）
+  bogey:   '#1a237e',  // 紺色（+1〜+1.5未満）
+  double:  '#2e7d32',  // 緑色（+1.5〜+2未満）
+  triple:  '#212121',  // 黒色（+2以上）
 }
 
 const DIST_LABELS = [
@@ -23,10 +24,11 @@ const DIST_LABELS = [
 ]
 
 function getAvgCategory(avgDiff) {
-  if (avgDiff <= -0.3)  return 'birdie'
-  if (avgDiff <=  0.3)  return 'par'
-  if (avgDiff <=  1.3)  return 'bogey'
-  if (avgDiff <=  2.3)  return 'double'
+  if (avgDiff <  0)    return 'eagle'
+  if (avgDiff <  0.5)  return 'birdie'
+  if (avgDiff <  1)    return 'par'
+  if (avgDiff <  1.5)  return 'bogey'
+  if (avgDiff <  2)    return 'double'
   return 'triple'
 }
 
@@ -50,8 +52,8 @@ const CustomAvgTooltip = ({ active, payload, label }) => {
   const sign   = d.avgDiff >= 0 ? '+' : ''
   const cat    = getAvgCategory(d.avgDiff)
   const catLabel = {
-    birdie: 'バーディ相当', par: 'パー相当',
-    bogey:  'ボギー相当',   double: 'ダブル相当', triple: 'トリプル以上',
+    eagle:  'イーグル相当', birdie: 'バーディ相当', par: 'パー相当',
+    bogey:  'ボギー相当',   double: 'ダブル相当',   triple: 'トリプル以上',
   }[cat]
   return (
     <div className="chart-tooltip">
@@ -288,13 +290,12 @@ export default function Analysis() {
     return result.map(r => ({ ...r, isBest: r.par === bestPar, isWorst: r.par === worstPar }))
   }, [filterCourseId, holeRounds, courses])
 
-  // Y軸domain（差分チャート用、0を含む）
+  // Y軸domain（差分チャート用、下限は-0.25固定）
   const avgDiffDomain = useMemo(() => {
-    if (!holeStats) return [-1, 3]
+    if (!holeStats) return [-0.25, 3]
     const diffs = holeStats.map(h => h.avgDiff)
-    const minV  = Math.min(...diffs, 0)
     const maxV  = Math.max(...diffs, 0)
-    return [Math.floor(minV - 0.3), Math.ceil(maxV + 0.3)]
+    return [-0.25, Math.ceil(maxV + 0.3)]
   }, [holeStats])
 
   const handleCourseChange = v => { setFilterCourseId(v); setFilterGreenId(''); setFilterTeeId('') }
@@ -422,51 +423,59 @@ export default function Analysis() {
                       <h2>ホール別平均スコア差分</h2>
                       <span style={{ fontSize: 12, color: 'var(--text-sub)' }}>0=パー基準</span>
                     </div>
-                    <div className="chart-card">
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart
-                          data={holeStats}
-                          margin={{ top: 10, right: 5, bottom: 28, left: -10 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis
-                            dataKey="hole"
-                            tick={makeXTick(holeStats)}
-                            height={38}
-                            interval={0}
-                          />
-                          <YAxis
-                            tick={{ fontSize: 11 }}
-                            domain={avgDiffDomain}
-                            tickFormatter={v => v >= 0 ? `+${v}` : `${v}`}
-                          />
-                          <ReferenceLine y={0} stroke="#888" strokeWidth={1.5} />
-                          <Tooltip content={<CustomAvgTooltip />} />
-                          <Bar dataKey="avgDiff" name="平均差分" radius={[3, 3, 0, 0]}>
-                            {holeStats.map((entry, idx) => (
-                              <Cell
-                                key={idx}
-                                fill={CATEGORY_COLORS[getAvgCategory(entry.avgDiff)]}
-                              />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
 
-                      <div className="chart-legend">
-                        {[
-                          { cat: 'birdie', label: 'バーディ以下（マイナス）' },
-                          { cat: 'par',    label: 'パー（±0前後）' },
-                          { cat: 'bogey',  label: 'ボギー相当（+1前後）' },
-                          { cat: 'double', label: 'ダブル相当（+2前後）' },
-                          { cat: 'triple', label: 'トリプル以上（+3〜）' },
-                        ].map(({ cat, label }) => (
-                          <div key={cat} className="chart-legend-item">
-                            <div style={{ width: 12, height: 12, borderRadius: 2, background: CATEGORY_COLORS[cat], flexShrink: 0 }} />
-                            <span>{label}</span>
-                          </div>
-                        ))}
+                    {[
+                      { label: 'アウト（1〜9番）',   data: holeStats.filter(h => h.hole <= 9) },
+                      { label: 'イン（10〜18番）', data: holeStats.filter(h => h.hole >= 10) },
+                    ].map(({ label, data }) => data.length > 0 && (
+                      <div key={label} className="chart-card" style={{ marginBottom: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>{label}</div>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart
+                            data={data}
+                            margin={{ top: 10, right: 5, bottom: 28, left: -10 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis
+                              dataKey="hole"
+                              tick={makeXTick(data)}
+                              height={38}
+                              interval={0}
+                            />
+                            <YAxis
+                              tick={{ fontSize: 11 }}
+                              domain={avgDiffDomain}
+                              tickFormatter={v => v >= 0 ? `+${v}` : `${v}`}
+                            />
+                            <ReferenceLine y={0} stroke="#888" strokeWidth={1.5} />
+                            <Tooltip content={<CustomAvgTooltip />} />
+                            <Bar dataKey="avgDiff" name="平均差分" radius={[3, 3, 0, 0]}>
+                              {data.map((entry, idx) => (
+                                <Cell
+                                  key={idx}
+                                  fill={CATEGORY_COLORS[getAvgCategory(entry.avgDiff)]}
+                                />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
                       </div>
+                    ))}
+
+                    <div className="chart-legend">
+                      {[
+                        { cat: 'eagle',  label: 'マイナス（イーグル相当）' },
+                        { cat: 'birdie', label: '+0.5未満（バーディ相当）' },
+                        { cat: 'par',    label: '+0.5〜+1未満（パー相当）' },
+                        { cat: 'bogey',  label: '+1〜+1.5未満（ボギー相当）' },
+                        { cat: 'double', label: '+1.5〜+2未満（ダブル相当）' },
+                        { cat: 'triple', label: '+2以上（トリプル以上）' },
+                      ].map(({ cat, label }) => (
+                        <div key={cat} className="chart-legend-item">
+                          <div style={{ width: 12, height: 12, borderRadius: 2, background: CATEGORY_COLORS[cat], flexShrink: 0 }} />
+                          <span>{label}</span>
+                        </div>
+                      ))}
                     </div>
                   </section>
 
@@ -475,42 +484,49 @@ export default function Analysis() {
                     <div className="section-header">
                       <h2>ホール別スコア分布</h2>
                     </div>
-                    <div className="chart-card">
-                      <ResponsiveContainer width="100%" height={230}>
-                        <BarChart
-                          data={holeStats}
-                          margin={{ top: 5, right: 5, bottom: 28, left: -10 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis
-                            dataKey="hole"
-                            tick={makeXTick(holeStats)}
-                            height={38}
-                            interval={0}
-                          />
-                          <YAxis tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
-                          <Tooltip content={<CustomDistTooltip />} />
-                          {DIST_LABELS.map((d, idx) => (
-                            <Bar
-                              key={d.key}
-                              dataKey={d.key}
-                              stackId="dist"
-                              name={d.label}
-                              fill={d.color}
-                              radius={idx === DIST_LABELS.length - 1 ? [3, 3, 0, 0] : undefined}
-                            />
-                          ))}
-                        </BarChart>
-                      </ResponsiveContainer>
 
-                      <div className="chart-legend">
-                        {DIST_LABELS.map(d => (
-                          <div key={d.key} className="chart-legend-item">
-                            <div style={{ width: 12, height: 12, borderRadius: 2, background: d.color, flexShrink: 0 }} />
-                            <span>{d.label}</span>
-                          </div>
-                        ))}
+                    {[
+                      { label: 'アウト（1〜9番）',   data: holeStats.filter(h => h.hole <= 9) },
+                      { label: 'イン（10〜18番）', data: holeStats.filter(h => h.hole >= 10) },
+                    ].map(({ label, data }) => data.length > 0 && (
+                      <div key={label} className="chart-card" style={{ marginBottom: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-sub)', marginBottom: 6 }}>{label}</div>
+                        <ResponsiveContainer width="100%" height={210}>
+                          <BarChart
+                            data={data}
+                            margin={{ top: 5, right: 5, bottom: 28, left: -10 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis
+                              dataKey="hole"
+                              tick={makeXTick(data)}
+                              height={38}
+                              interval={0}
+                            />
+                            <YAxis tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
+                            <Tooltip content={<CustomDistTooltip />} />
+                            {DIST_LABELS.map((d, idx) => (
+                              <Bar
+                                key={d.key}
+                                dataKey={d.key}
+                                stackId="dist"
+                                name={d.label}
+                                fill={d.color}
+                                radius={idx === DIST_LABELS.length - 1 ? [3, 3, 0, 0] : undefined}
+                              />
+                            ))}
+                          </BarChart>
+                        </ResponsiveContainer>
                       </div>
+                    ))}
+
+                    <div className="chart-legend">
+                      {DIST_LABELS.map(d => (
+                        <div key={d.key} className="chart-legend-item">
+                          <div style={{ width: 12, height: 12, borderRadius: 2, background: d.color, flexShrink: 0 }} />
+                          <span>{d.label}</span>
+                        </div>
+                      ))}
                     </div>
                   </section>
                 </>
