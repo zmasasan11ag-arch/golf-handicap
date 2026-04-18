@@ -7,12 +7,11 @@ import {
 
 // スコア色（index.css の変数に合わせる）
 const CATEGORY_COLORS = {
-  eagle:   '#e53935',  // 赤（マイナス平均）
-  birdie:  '#ef6c00',  // オレンジ（0〜+0.5未満）
-  par:     '#4dd0e1',  // 水色（+0.5〜+1未満）
-  bogey:   '#1a237e',  // 紺色（+1〜+1.5未満）
-  double:  '#2e7d32',  // 緑色（+1.5〜+2未満）
-  triple:  '#212121',  // 黒色（+2以上）
+  birdie:  '#ef6c00',  // オレンジ（マイナス＝バーディ以下）
+  par:     '#4dd0e1',  // 水色（0〜+0.5未満）
+  bogey:   '#1a237e',  // 紺色（+0.5〜+1.5未満）
+  double:  '#2e7d32',  // 緑色（+1.5〜+2.5未満）
+  triple:  '#212121',  // 黒色（+2.5以上）
 }
 
 const DIST_LABELS = [
@@ -24,12 +23,11 @@ const DIST_LABELS = [
 ]
 
 function getAvgCategory(avgDiff) {
-  if (avgDiff <  0)    return 'eagle'
-  if (avgDiff <  0.5)  return 'birdie'
-  if (avgDiff <  1)    return 'par'
-  if (avgDiff <  1.5)  return 'bogey'
-  if (avgDiff <  2)    return 'double'
-  return 'triple'
+  if (avgDiff <  0)    return 'birdie'  // マイナス → オレンジ（バーディ相当）
+  if (avgDiff <  0.5)  return 'par'    // 水色
+  if (avgDiff <  1.5)  return 'bogey'  // 紺色
+  if (avgDiff <  2.5)  return 'double' // 緑色
+  return 'triple'                       // 黒色
 }
 
 /** ホール番号 + par を2段で表示するカスタムXTick */
@@ -52,8 +50,8 @@ const CustomAvgTooltip = ({ active, payload, label }) => {
   const sign   = d.avgDiff >= 0 ? '+' : ''
   const cat    = getAvgCategory(d.avgDiff)
   const catLabel = {
-    eagle:  'イーグル相当', birdie: 'バーディ相当', par: 'パー相当',
-    bogey:  'ボギー相当',   double: 'ダブル相当',   triple: 'トリプル以上',
+    birdie: 'バーディ以下', par: 'パー相当',
+    bogey:  'ボギー相当',   double: 'ダブル相当', triple: 'トリプル以上',
   }[cat]
   return (
     <div className="chart-tooltip">
@@ -143,6 +141,15 @@ export default function Analysis() {
   const [filterCourseId, setFilterCourseId] = useState('')
   const [filterGreenId,  setFilterGreenId]  = useState('')
   const [filterTeeId,    setFilterTeeId]    = useState('')
+  const [filterPeriod,   setFilterPeriod]   = useState('')
+
+  const PERIOD_OPTIONS = [
+    { value: '',   label: '全期間' },
+    { value: '1m', label: '直近1ヶ月' },
+    { value: '3m', label: '直近3ヶ月' },
+    { value: '6m', label: '直近6ヶ月' },
+    { value: '1y', label: '直近1年' },
+  ]
 
   const selectedCourse = courses.find(c => c.id === filterCourseId)
   const selectedGreen  = selectedCourse?.greens?.find(g => g.id === filterGreenId)
@@ -172,12 +179,23 @@ export default function Analysis() {
   }, [rounds, filterCourseId, filterGreenId, selectedCourse, selectedGreen])
 
   // ── フィルター適用 ──
-  const filteredRounds = useMemo(() => rounds.filter(r => {
-    if (filterCourseId && r.courseId !== filterCourseId) return false
-    if (filterGreenId  && r.greenId  !== filterGreenId)  return false
-    if (filterTeeId    && r.teeId    !== filterTeeId)    return false
-    return true
-  }), [rounds, filterCourseId, filterGreenId, filterTeeId])
+  const filteredRounds = useMemo(() => {
+    let cutoff = null
+    if (filterPeriod) {
+      const now = new Date()
+      if (filterPeriod === '1m') cutoff = new Date(now.getFullYear(), now.getMonth() - 1,  now.getDate())
+      if (filterPeriod === '3m') cutoff = new Date(now.getFullYear(), now.getMonth() - 3,  now.getDate())
+      if (filterPeriod === '6m') cutoff = new Date(now.getFullYear(), now.getMonth() - 6,  now.getDate())
+      if (filterPeriod === '1y') cutoff = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+    }
+    return rounds.filter(r => {
+      if (filterCourseId && r.courseId !== filterCourseId) return false
+      if (filterGreenId  && r.greenId  !== filterGreenId)  return false
+      if (filterTeeId    && r.teeId    !== filterTeeId)    return false
+      if (cutoff && new Date(r.date) < cutoff)             return false
+      return true
+    })
+  }, [rounds, filterCourseId, filterGreenId, filterTeeId, filterPeriod])
 
   const holeRounds = useMemo(
     () => filteredRounds.filter(r => r.scores?.length === 18),
@@ -330,7 +348,7 @@ export default function Analysis() {
         )}
 
         {availableTees.length > 0 && (
-          <div className="form-group" style={{ marginBottom: 0 }}>
+          <div className="form-group">
             <label>ティー</label>
             <select value={filterTeeId} onChange={e => setFilterTeeId(e.target.value)} className="form-input">
               <option value="">すべてのティー</option>
@@ -338,6 +356,22 @@ export default function Analysis() {
             </select>
           </div>
         )}
+
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label>対象期間</label>
+          <div className="period-selector">
+            {PERIOD_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                className={`period-btn${filterPeriod === opt.value ? ' selected' : ''}`}
+                onClick={() => setFilterPeriod(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       {filteredRounds.length < 3 ? (
@@ -464,12 +498,11 @@ export default function Analysis() {
 
                     <div className="chart-legend">
                       {[
-                        { cat: 'eagle',  label: 'マイナス（イーグル相当）' },
-                        { cat: 'birdie', label: '+0.5未満（バーディ相当）' },
-                        { cat: 'par',    label: '+0.5〜+1未満（パー相当）' },
-                        { cat: 'bogey',  label: '+1〜+1.5未満（ボギー相当）' },
-                        { cat: 'double', label: '+1.5〜+2未満（ダブル相当）' },
-                        { cat: 'triple', label: '+2以上（トリプル以上）' },
+                        { cat: 'birdie', label: 'マイナス（バーディ以下）' },
+                        { cat: 'par',    label: '+0.5未満（パー相当）' },
+                        { cat: 'bogey',  label: '+0.5〜+1.5未満（ボギー相当）' },
+                        { cat: 'double', label: '+1.5〜+2.5未満（ダブル相当）' },
+                        { cat: 'triple', label: '+2.5以上（トリプル以上）' },
                       ].map(({ cat, label }) => (
                         <div key={cat} className="chart-legend-item">
                           <div style={{ width: 12, height: 12, borderRadius: 2, background: CATEGORY_COLORS[cat], flexShrink: 0 }} />

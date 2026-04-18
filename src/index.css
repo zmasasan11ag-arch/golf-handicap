@@ -456,6 +456,31 @@ html, body {
 
 textarea.form-input { resize: vertical; min-height: 60px; }
 
+/* =================== 期間フィルター =================== */
+.period-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.period-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: #fff;
+  color: var(--text-sub);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.period-btn.selected {
+  background: var(--green-mid);
+  color: #fff;
+  border-color: var(--green-mid);
+  font-weight: 600;
+}
+
 /* =================== グリーン選択 =================== */
 .green-selector {
   display: flex;
