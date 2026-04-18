@@ -308,13 +308,9 @@ export default function Analysis() {
     return result.map(r => ({ ...r, isBest: r.par === bestPar, isWorst: r.par === worstPar }))
   }, [filterCourseId, holeRounds, courses])
 
-  // Y軸domain（差分チャート用、下限は-0.25固定）
-  const avgDiffDomain = useMemo(() => {
-    if (!holeStats) return [-0.25, 3]
-    const diffs = holeStats.map(h => h.avgDiff)
-    const maxV  = Math.max(...diffs, 0)
-    return [-0.25, Math.ceil(maxV + 0.3)]
-  }, [holeStats])
+  // Y軸domain（差分チャート用、固定: -0.5〜+2、0.5刻み）
+  const AVG_DIFF_DOMAIN = [-0.5, 2]
+  const AVG_DIFF_TICKS  = [-0.5, 0, 0.5, 1, 1.5, 2]
 
   const handleCourseChange = v => { setFilterCourseId(v); setFilterGreenId(''); setFilterTeeId('') }
   const handleGreenChange  = v => { setFilterGreenId(v);  setFilterTeeId('') }
@@ -478,8 +474,10 @@ export default function Analysis() {
                             />
                             <YAxis
                               tick={{ fontSize: 11 }}
-                              domain={avgDiffDomain}
-                              tickFormatter={v => v >= 0 ? `+${v}` : `${v}`}
+                              domain={AVG_DIFF_DOMAIN}
+                              ticks={AVG_DIFF_TICKS}
+                              tickFormatter={v => v > 0 ? `+${v}` : `${v}`}
+                              allowDataOverflow
                             />
                             <ReferenceLine y={0} stroke="#888" strokeWidth={1.5} />
                             <Tooltip content={<CustomAvgTooltip />} />
