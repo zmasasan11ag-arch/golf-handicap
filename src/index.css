@@ -237,7 +237,6 @@ html, body {
 
 .round-card:active { transform: scale(.98); }
 
-.round-card-left { flex: 1; }
 .round-date { font-size: 13px; color: var(--text-sub); }
 .round-course {
   font-size: 14px;
@@ -1327,4 +1326,48 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   box-shadow: var(--shadow-md);
 }
 .confirm-dialog p { font-size: 14px; margin-bottom: 8px; }
+
+/* ── ラウンド一覧 タグ2行レイアウト ── */
+.round-course {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── スコア入力 横スクロール ── */
+.nine-hole-grid {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nine-hole-grid .hole-grid-header,
+.nine-hole-grid .hole-grid-par,
+.nine-hole-grid .hole-grid-esc,
+.nine-hole-grid .hole-grid-score {
+  display: grid;
+  grid-template-columns: 3rem repeat(9, minmax(2.4rem, 1fr)) 2.8rem;
+  min-width: 320px;
+}
 .confirm-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+
+.round-card-left {
+  flex: 1;
+  min-width: 0;
+}
+.round-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.round-course-name {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.round-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}

@@ -48,9 +48,11 @@ export default function RoundList() {
                   onClick={() => setExpandedId(isExpanded ? null : round.id)}
                 >
                   <div className="round-card-left">
-                    <div className="round-date">{formatDate(round.date)}</div>
-                    <div className="round-course">
-                      {course?.shortName || round.courseId}
+                    <div className="round-top-row">
+                      <span className="round-date">{formatDate(round.date)}</span>
+                      <span className="round-course-name">{course?.shortName || round.courseId}</span>
+                    </div>
+                    <div className="round-tags">
                       {round.isCompetition && (
                         <span className="competition-badge">競技</span>
                       )}
