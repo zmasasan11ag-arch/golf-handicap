@@ -631,11 +631,11 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 /* ── スコアグリッド入力（色分けリアルタイム反映） ── */
 .score-grid-input {
   width: 100%;
-  height: 30px;
+  height: 44px;
   text-align: center;
   border: 1px solid var(--border);
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   background: #fff;
   color: var(--text);
