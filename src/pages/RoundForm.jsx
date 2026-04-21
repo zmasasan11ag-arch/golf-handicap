@@ -30,6 +30,7 @@ export default function RoundForm() {
   const [teeId,         setTeeId]         = useState(initTeeId)
   const [inputMode,     setInputMode]     = useState(existingRound?.inputMode  || 'hole')
   const [scores,        setScores]        = useState(existingRound?.scores     || Array(18).fill(''))
+  const [putts,         setPutts]         = useState(existingRound?.putts      || Array(18).fill(2))
   const [grossScore,    setGrossScore]    = useState(existingRound?.grossScore?.toString() || '')
   const [memo,          setMemo]          = useState(existingRound?.memo       || '')
   const [isCompetition, setIsCompetition] = useState(existingRound?.isCompetition || false)
@@ -87,6 +88,17 @@ export default function RoundForm() {
       }
       return arr
     })
+  }
+
+  function handlePuttChange(index, value) {
+    const arr = [...putts]
+    if (value === '') {
+      arr[index] = ''
+    } else {
+      const n = parseInt(value)
+      arr[index] = isNaN(n) ? '' : Math.max(0, Math.min(6, n))
+    }
+    setPutts(arr)
   }
 
   function handleImageChange(e) {
@@ -312,8 +324,10 @@ export default function RoundForm() {
             <HoleByHoleInput
               holes={course.holes}
               scores={scores}
+              putts={putts}
               courseHandicap={courseHandicap}
               onChange={handleScoreChange}
+              onPuttChange={handlePuttChange}
               onBulkFill={handleBulkFill}
               total={holeTotal}
             />
@@ -332,8 +346,10 @@ export default function RoundForm() {
               imagePreview={imagePreview}
               holes={course.holes}
               scores={scores}
+              putts={putts}
               courseHandicap={courseHandicap}
               onChange={handleScoreChange}
+              onPuttChange={handlePuttChange}
               onBulkFill={handleBulkFill}
               onImageChange={handleImageChange}
               total={holeTotal}
@@ -368,7 +384,7 @@ export default function RoundForm() {
 /* ──────────────────────────────────────────────
    ホールごと入力（18ホール一覧、Tab/Enterで連続移動）
    ────────────────────────────────────────────── */
-function HoleByHoleInput({ holes, scores, courseHandicap, onChange, onBulkFill, total }) {
+function HoleByHoleInput({ holes, scores, putts, courseHandicap, onChange, onPuttChange, onBulkFill, total }) {
   const inputRefs = useRef([])
 
   function handleKeyDown(e, index) {
@@ -391,9 +407,12 @@ function HoleByHoleInput({ holes, scores, courseHandicap, onChange, onBulkFill, 
       <ScoreGrid
         holes={front}
         scores={scores.slice(0, 9)}
+        putts={putts.slice(0, 9)}
         baseIndex={0}
         courseHandicap={courseHandicap}
         onChange={onChange}
+        onPuttChange={onPuttChange}
+        puttBaseIndex={0}
         onBulkFill={onBulkFill ? (mode) => onBulkFill(0, 9, mode) : null}
         onKeyDown={handleKeyDown}
         inputRefs={inputRefs}
@@ -404,9 +423,12 @@ function HoleByHoleInput({ holes, scores, courseHandicap, onChange, onBulkFill, 
       <ScoreGrid
         holes={back}
         scores={scores.slice(9, 18)}
+        putts={putts.slice(9, 18)}
         baseIndex={9}
         courseHandicap={courseHandicap}
         onChange={onChange}
+        onPuttChange={onPuttChange}
+        puttBaseIndex={9}
         onBulkFill={onBulkFill ? (mode) => onBulkFill(9, 18, mode) : null}
         onKeyDown={handleKeyDown}
         inputRefs={inputRefs}
@@ -422,7 +444,7 @@ function HoleByHoleInput({ holes, scores, courseHandicap, onChange, onBulkFill, 
   )
 }
 
-function ScoreGrid({ holes, scores, baseIndex, courseHandicap, onChange, onBulkFill, onKeyDown, inputRefs, label, parTotal, scoreTotal }) {
+function ScoreGrid({ holes, scores, putts, baseIndex, courseHandicap, onChange, onPuttChange, onBulkFill, onKeyDown, inputRefs, label, parTotal, scoreTotal, puttBaseIndex }) {
   return (
     <div className="nine-hole-grid">
 
@@ -480,6 +502,35 @@ function ScoreGrid({ holes, scores, baseIndex, courseHandicap, onChange, onBulkF
           )
         })}
         <div className="hg-total">{scoreTotal > 0 ? scoreTotal : '--'}</div>
+      </div>
+
+      {/* パット入力 */}
+      <div className="hole-grid-putt">
+        <div className="hg-label">Putt</div>
+        {holes.map((h, i) => {
+          const globalIdx = puttBaseIndex + i
+          const val = putts[i]
+          return (
+            <div key={h.number} className="hg-cell">
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                max="6"
+                value={val === '' ? '' : val}
+                onChange={e => onPuttChange(globalIdx, e.target.value)}
+                onFocus={e => e.target.select()}
+                onClick={() => { if (val !== '') onPuttChange(globalIdx, '') }}
+                className="putt-grid-input"
+                placeholder="2"
+                aria-label={`${h.number}番ホール パット数`}
+              />
+            </div>
+          )
+        })}
+        <div className="hg-total">
+          {putts.reduce((s, v) => s + (parseInt(v) || 0), 0) || '--'}
+        </div>
       </div>
 
       {/* 一括入力ボタン */}
