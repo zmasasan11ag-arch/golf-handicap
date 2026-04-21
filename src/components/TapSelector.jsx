@@ -13,9 +13,22 @@ export default function TapSelector({
   const [isOpen, setIsOpen] = useState(false)
   const [isManual, setIsManual] = useState(false)
   const [manualValue, setManualValue] = useState('')
+  const [popupTop, setPopupTop] = useState(0)
   const wrapperRef = useRef(null)
 
   const displayValue = value === '' || value == null ? placeholder : value
+
+  useEffect(() => {
+    if (!isOpen || !wrapperRef.current) return
+    const rect = wrapperRef.current.getBoundingClientRect()
+    const popupHeight = 70
+    const spaceBelow = window.innerHeight - rect.bottom
+    if (spaceBelow > popupHeight + 20) {
+      setPopupTop(rect.bottom + 4)
+    } else {
+      setPopupTop(rect.top - popupHeight - 4)
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
@@ -60,7 +73,7 @@ export default function TapSelector({
       </button>
 
       {isOpen && (
-        <div className="tap-selector-popup">
+        <div className="tap-selector-popup" style={{ top: `${popupTop}px` }}>
           {isManual ? (
             <div className="tap-selector-manual">
               <input

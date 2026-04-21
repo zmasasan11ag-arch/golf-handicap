@@ -1497,15 +1497,13 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 }
 
 .tap-selector-popup {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
+  left: 8px;
+  right: 8px;
   background: #fff;
   border: 1px solid #d3d1c7;
   border-radius: 8px;
-  padding: 6px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-  z-index: 100;
-  min-width: 260px;
+  padding: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  z-index: 1000;
 }
