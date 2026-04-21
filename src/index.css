@@ -1398,3 +1398,130 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   border-color: var(--green-mid);
   box-shadow: 0 0 0 2px rgba(46,125,50,.18);
 }
+
+/* ── タップ選択式セル ── */
+.tap-selector-cell {
+  width: 100%;
+  height: 44px;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background .1s, color .1s, border-color .1s;
+  font-family: inherit;
+}
+.tap-selector-cell:active {
+  transform: scale(0.95);
+}
+
+/* タップ選択パネル（モーダル） */
+.tap-selector-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.tap-selector-panel {
+  background: #fff;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 16px 16px 0 0;
+  padding: 20px 16px 32px;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.tap-selector-title {
+  font-size: 14px;
+  color: var(--text-muted, #666);
+  margin-bottom: 12px;
+  text-align: center;
+}
+.tap-selector-options {
+  display: flex;
+  gap: 6px;
+}
+.tap-selector-option {
+  flex: 1;
+  height: 52px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .1s;
+}
+.tap-selector-option:active {
+  transform: scale(0.95);
+}
+.tap-selector-option.selected {
+  border: 2px solid var(--green-mid, #2E7D32);
+  background: #E8F5E9;
+  color: var(--green-mid, #2E7D32);
+}
+.tap-selector-option.manual {
+  flex: 1.3;
+  font-size: 14px;
+  background: #f5f5f5;
+  color: #666;
+}
+
+/* 直接入力モード */
+.tap-selector-manual {
+  display: flex;
+  gap: 8px;
+}
+.tap-selector-manual-input {
+  flex: 1;
+  height: 52px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 20px;
+  text-align: center;
+  font-weight: 600;
+  outline: none;
+}
+.tap-selector-manual-input:focus {
+  border-color: var(--green-mid, #2E7D32);
+}
+.tap-selector-manual-ok,
+.tap-selector-manual-cancel {
+  height: 52px;
+  padding: 0 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.tap-selector-manual-ok {
+  background: var(--green-mid, #2E7D32);
+  color: #fff;
+  border-color: var(--green-mid, #2E7D32);
+}
+.tap-selector-manual-cancel {
+  background: #f5f5f5;
+  color: #666;
+}

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../context/AppContext.jsx'
 import { escLimit, getScoreCategory } from '../utils/handicapCalc.js'
 import { findTee, defaultGreenId, defaultTeeId } from '../data/courses.js'
+import TapSelector from '../components/TapSelector.jsx'
 
 const INPUT_MODES = [
   { id: 'hole',  label: 'ホールごと' },
@@ -473,7 +474,7 @@ function ScoreGrid({ holes, scores, putts, baseIndex, courseHandicap, onChange, 
         <div className="hg-total">-</div>
       </div>
 
-      {/* スコア入力（色即時反映） */}
+      {/* スコア入力（タップ選択式） */}
       <div className="hole-grid-score">
         <div className="hg-label">Score</div>
         {holes.map((h, i) => {
@@ -481,22 +482,17 @@ function ScoreGrid({ holes, scores, putts, baseIndex, courseHandicap, onChange, 
           const val    = scores[i]
           const parsed = parseInt(val)
           const cat    = parsed > 0 ? getScoreCategory(parsed, h.par) : ''
+          const scoreOptions = [h.par - 1, h.par, h.par + 1, h.par + 2, h.par + 3]
           return (
             <div key={h.number} className="hg-cell">
-              <input
-                ref={el => { inputRefs.current[globalIdx] = el }}
-                type="number"
-                inputMode="numeric"
-                min="1"
-                max="15"
-                value={val === '' ? '' : val}
-                onChange={e => onChange(globalIdx, e.target.value)}
-                onKeyDown={e => onKeyDown(e, globalIdx)}
-                onFocus={e => e.target.select()}
-                onClick={() => { if (val !== '') onChange(globalIdx, '') }}
+              <TapSelector
+                value={val}
+                options={scoreOptions}
+                onSelect={v => onChange(globalIdx, v)}
                 className={`score-grid-input${cat ? ` sg-${cat}` : ''}`}
-                placeholder="-"
-                aria-label={`${h.number}番ホール スコア`}
+                minValue={1}
+                maxValue={15}
+                ariaLabel={`${h.number}番ホール（Par ${h.par}）スコア`}
               />
             </div>
           )
@@ -510,20 +506,18 @@ function ScoreGrid({ holes, scores, putts, baseIndex, courseHandicap, onChange, 
         {holes.map((h, i) => {
           const globalIdx = puttBaseIndex + i
           const val = putts[i]
+          const puttOptions = [0, 1, 2, 3, 4]
           return (
             <div key={h.number} className="hg-cell">
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                max="6"
-                value={val === '' ? '' : val}
-                onChange={e => onPuttChange(globalIdx, e.target.value)}
-                onFocus={e => e.target.select()}
-                onClick={() => { if (val !== '') onPuttChange(globalIdx, '') }}
+              <TapSelector
+                value={val}
+                options={puttOptions}
+                onSelect={v => onPuttChange(globalIdx, v)}
                 className="putt-grid-input"
+                minValue={0}
+                maxValue={6}
                 placeholder="2"
-                aria-label={`${h.number}番ホール パット数`}
+                ariaLabel={`${h.number}番ホール パット数`}
               />
             </div>
           )
