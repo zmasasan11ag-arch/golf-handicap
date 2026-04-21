@@ -1428,10 +1428,10 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  z-index: 1000;
   animation: fadeIn 0.15s ease;
 }
 @keyframes fadeIn {
@@ -1439,12 +1439,15 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   to { opacity: 1; }
 }
 .tap-selector-panel {
-  background: #fff;
   width: 100%;
   max-width: 500px;
+  background: #fff;
   border-radius: 16px 16px 0 0;
-  padding: 20px 16px 32px;
-  animation: slideUp 0.2s ease;
+  padding: 16px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+  max-height: 80vh;
+  overflow-y: auto;
 }
 @keyframes slideUp {
   from { transform: translateY(100%); }
