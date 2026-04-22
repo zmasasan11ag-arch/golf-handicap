@@ -191,6 +191,7 @@ export default function RoundForm() {
       teeId,
       inputMode,
       scores: (inputMode === 'hole' || inputMode === 'image') ? parsedScores : [],
+      putts: (inputMode === 'hole' || inputMode === 'image') ? putts.map(p => parseInt(p) || 0) : [],
       grossScore: total,
       memo,
       isCompetition,
@@ -497,7 +498,12 @@ function ScoreGrid({ holes, scores, putts, baseIndex, courseHandicap, onChange, 
             </div>
           )
         })}
-        <div className="hg-total">{scoreTotal > 0 ? scoreTotal : '--'}</div>
+        <div className="hg-total">
+          {scoreTotal > 0 ? scoreTotal : '--'}
+          <div className="putt-total-mini">
+            P:{putts.reduce((s, v) => s + (parseInt(v) || 0), 0) || '-'}
+          </div>
+        </div>
       </div>
 
       {/* パット入力 */}
