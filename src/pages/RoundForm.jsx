@@ -485,7 +485,7 @@ function ScoreGrid({ holes, scores, putts, baseIndex, courseHandicap, onChange, 
           const cat    = parsed > 0 ? getScoreCategory(parsed, h.par) : ''
           const scoreOptions = [h.par - 1, h.par, h.par + 1, h.par + 2, h.par + 3]
           return (
-            <div key={h.number} className="hg-cell">
+            <div key={h.number} className="hg-cell score-with-putt">
               <TapSelector
                 value={val}
                 options={scoreOptions}
@@ -495,43 +495,29 @@ function ScoreGrid({ holes, scores, putts, baseIndex, courseHandicap, onChange, 
                 maxValue={15}
                 ariaLabel={`${h.number}番ホール（Par ${h.par}）スコア`}
               />
+              <span className="putt-input-badge">
+                <TapSelector
+                  value={putts[i]}
+                  options={[0, 1, 2, 3, 4]}
+                  onSelect={v => onPuttChange(puttBaseIndex + i, v)}
+                  className="putt-badge-input"
+                  minValue={0}
+                  maxValue={6}
+                  placeholder="2"
+                  ariaLabel={`${h.number}番ホール パット数`}
+                />
+              </span>
             </div>
           )
         })}
         <div className="hg-total">
           {scoreTotal > 0 ? scoreTotal : '--'}
-          <div className="putt-total-mini">
+          <div className="putt-total-sub">
             P:{putts.reduce((s, v) => s + (parseInt(v) || 0), 0) || '-'}
           </div>
         </div>
       </div>
 
-      {/* パット入力 */}
-      <div className="hole-grid-putt">
-        <div className="hg-label">Putt</div>
-        {holes.map((h, i) => {
-          const globalIdx = puttBaseIndex + i
-          const val = putts[i]
-          const puttOptions = [0, 1, 2, 3, 4]
-          return (
-            <div key={h.number} className="hg-cell">
-              <TapSelector
-                value={val}
-                options={puttOptions}
-                onSelect={v => onPuttChange(globalIdx, v)}
-                className="putt-grid-input"
-                minValue={0}
-                maxValue={6}
-                placeholder="2"
-                ariaLabel={`${h.number}番ホール パット数`}
-              />
-            </div>
-          )
-        })}
-        <div className="hg-total">
-          {putts.reduce((s, v) => s + (parseInt(v) || 0), 0) || '--'}
-        </div>
-      </div>
 
       {/* 一括入力ボタン */}
       {onBulkFill && (

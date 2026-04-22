@@ -197,23 +197,22 @@ function ScoreGrid({ round, course }) {
           <div className="sc-total">{frontPar}</div>
         </div>
         <div className="scorecard-row score-row">
-          <div className="sc-hole">Score</div>
-          {frontScores.map((s, i) => (
-            <div key={i} className="sc-cell">
-              <ScoreCell score={s} par={front[i].par} />
+            <div className="sc-hole">Score</div>
+            {frontScores.map((s, i) => (
+              <div key={i} className="sc-cell score-with-putt">
+                <ScoreCell score={s} par={front[i].par} />
+                {frontPutts[i] != null && frontPutts[i] !== '' && (
+                  <span className="putt-badge">{frontPutts[i]}</span>
+                )}
+              </div>
+            ))}
+            <div className="sc-total">
+              {frontTotal}
+              {round.putts?.length === 18 && (
+                <span className="putt-total-sub">P:{frontPuttTotal}</span>
+              )}
             </div>
-          ))}
-          <div className="sc-total">{frontTotal}</div>
-        </div>
-          {round.putts?.length === 18 && (
-            <div className="scorecard-row putt-row">
-              <div className="sc-hole">Putt</div>
-              {frontPutts.map((p, i) => (
-                <div key={i} className="sc-cell">{p || '-'}</div>
-              ))}
-              <div className="sc-total">{frontPuttTotal || '-'}</div>
-            </div>
-          )}
+          </div>
       </div>
 
       <div className="scorecard-section">
@@ -228,23 +227,22 @@ function ScoreGrid({ round, course }) {
           <div className="sc-total">{backPar}</div>
         </div>
         <div className="scorecard-row score-row">
-          <div className="sc-hole">Score</div>
-          {backScores.map((s, i) => (
-            <div key={i} className="sc-cell">
-              <ScoreCell score={s} par={back[i].par} />
+            <div className="sc-hole">Score</div>
+            {backScores.map((s, i) => (
+              <div key={i} className="sc-cell score-with-putt">
+                <ScoreCell score={s} par={back[i].par} />
+                {backPutts[i] != null && backPutts[i] !== '' && (
+                  <span className="putt-badge">{backPutts[i]}</span>
+                )}
+              </div>
+            ))}
+            <div className="sc-total">
+              {backTotal}
+              {round.putts?.length === 18 && (
+                <span className="putt-total-sub">P:{backPuttTotal}</span>
+              )}
             </div>
-          ))}
-          <div className="sc-total">{backTotal}</div>
-        </div>
-          {round.putts?.length === 18 && (
-            <div className="scorecard-row putt-row">
-              <div className="sc-hole">Putt</div>
-              {backPutts.map((p, i) => (
-                <div key={i} className="sc-cell">{p || '-'}</div>
-              ))}
-              <div className="sc-total">{backPuttTotal || '-'}</div>
-            </div>
-          )}
+          </div>
       </div>
 
       {round.adjustedScores?.length === 18 && (
