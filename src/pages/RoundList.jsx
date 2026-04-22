@@ -170,6 +170,11 @@ function ScoreGrid({ round, course }) {
   const front = course.holes.slice(0, 9)
   const back = course.holes.slice(9, 18)
 
+  const frontPutts = round.putts?.slice(0, 9) || []
+  const backPutts = round.putts?.slice(9, 18) || []
+  const frontPuttTotal = frontPutts.reduce((s, v) => s + (parseInt(v) || 0), 0)
+  const backPuttTotal = backPutts.reduce((s, v) => s + (parseInt(v) || 0), 0)
+
   const frontScores = round.scores.slice(0, 9)
   const backScores = round.scores.slice(9, 18)
 
@@ -200,6 +205,15 @@ function ScoreGrid({ round, course }) {
           ))}
           <div className="sc-total">{frontTotal}</div>
         </div>
+          {round.putts?.length === 18 && (
+            <div className="scorecard-row putt-row">
+              <div className="sc-hole">Putt</div>
+              {frontPutts.map((p, i) => (
+                <div key={i} className="sc-cell">{p || '-'}</div>
+              ))}
+              <div className="sc-total">{frontPuttTotal || '-'}</div>
+            </div>
+          )}
       </div>
 
       <div className="scorecard-section">
@@ -222,6 +236,15 @@ function ScoreGrid({ round, course }) {
           ))}
           <div className="sc-total">{backTotal}</div>
         </div>
+          {round.putts?.length === 18 && (
+            <div className="scorecard-row putt-row">
+              <div className="sc-hole">Putt</div>
+              {backPutts.map((p, i) => (
+                <div key={i} className="sc-cell">{p || '-'}</div>
+              ))}
+              <div className="sc-total">{backPuttTotal || '-'}</div>
+            </div>
+          )}
       </div>
 
       {round.adjustedScores?.length === 18 && (

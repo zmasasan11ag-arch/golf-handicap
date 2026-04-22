@@ -624,7 +624,8 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 .hole-grid-par .hg-cell { color: var(--green-mid); font-weight: 600; font-size: 13px; }
 .esc-limit { color: #1565c0; font-size: 12px; }
 
-.hole-grid-score .hg-cell {
+.hole-grid-score .hg-cell,
+.hole-grid-putt .hg-cell {
   padding: 2px 1px;
 }
 
