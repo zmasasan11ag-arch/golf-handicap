@@ -1509,3 +1509,21 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   color: #888;
   margin-top: 2px;
 }
+
+.hole-grid-score .hg-cell,
+.hole-grid-putt .hg-cell {
+  padding: 2px 1px;
+  box-sizing: border-box;
+}
+
+.hole-grid-score .hg-cell .tap-selector-wrapper,
+.hole-grid-putt .hg-cell .tap-selector-wrapper {
+  width: 100%;
+  display: block;
+}
+
+.hole-grid-score .tap-selector-cell,
+.hole-grid-putt .tap-selector-cell {
+  width: 100%;
+  box-sizing: border-box;
+}
