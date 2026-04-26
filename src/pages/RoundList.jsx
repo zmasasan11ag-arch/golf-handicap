@@ -52,11 +52,11 @@ export default function RoundList() {
                     <div className="round-top-row">
                       <span className="round-date">{formatDate(round.date)}</span>
                       <span className="round-course-name">{course?.shortName || round.courseId}</span>
-                    </div>
-                    <div className="round-tags">
                       {round.isCompetition && (
                         <span className="competition-badge">競技</span>
                       )}
+                    </div>
+                    <div className="round-tags">
                       {green && course?.greens?.length > 1 && (
                         <span className="green-badge">{green.name}</span>
                       )}
