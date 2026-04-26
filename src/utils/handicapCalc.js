@@ -176,3 +176,35 @@ export function recalcAllRounds(rounds, courses) {
     return updatedRound
   })
 }
+
+/**
+ * パーオン（GIR）判定
+ * Par-2打以内にグリーンに乗ったかどうか
+ * 計算: スコア - パット数 ≤ Par - 2
+ */
+export function isGIR(score, putts, par) {
+  if (!score || !putts || !par) return false
+  return (score - putts) <= (par - 2)
+}
+
+/**
+ * ラウンド全体のGIR数を計算
+ */
+export function calcGIRCount(scores, putts, holes) {
+  if (!scores?.length === 18 || !putts?.length === 18) return 0
+  let count = 0
+  for (let i = 0; i < 18; i++) {
+    if (isGIR(scores[i], putts[i], holes[i].par)) {
+      count++
+    }
+  }
+  return count
+}
+
+/**
+ * ラウンド全体のGIR率（％）を計算
+ */
+export function calcGIRRate(scores, putts, holes) {
+  const count = calcGIRCount(scores, putts, holes)
+  return Math.round((count / 18) * 100)
+}

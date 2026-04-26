@@ -308,6 +308,71 @@ export default function Analysis() {
     return result.map(r => ({ ...r, isBest: r.par === bestPar, isWorst: r.par === worstPar }))
   }, [filterCourseId, holeRounds, courses])
 
+  // ── パット統計 ──
+  const puttStats = useMemo(() => {
+    const roundsWithPutts = filteredRounds.filter(r => r.putts?.length === 18)
+    if (roundsWithPutts.length === 0) return null
+
+    let totalPutts = 0
+    let totalHoles = 0
+    let onePuttCount = 0
+    let threePuttPlusCount = 0
+    let girCount = 0
+    let girHoles = 0
+
+    roundsWithPutts.forEach(r => {
+      const course = courses.find(c => c.id === r.courseId)
+      if (!course) return
+      r.putts.forEach((p, i) => {
+        const putt = parseInt(p) || 0
+        if (putt === 0) return
+        totalPutts += putt
+        totalHoles++
+        if (putt === 1) onePuttCount++
+        if (putt >= 3) threePuttPlusCount++
+        const score = r.scores[i]
+        const par = course.holes[i]?.par
+        if (score && par && (score - putt) <= (par - 2)) {
+          girCount++
+        }
+        girHoles++
+      })
+    })
+
+    if (totalHoles === 0) return null
+
+    return {
+      roundCount: roundsWithPutts.length,
+      avgPuttsPerHole: (totalPutts / totalHoles).toFixed(2),
+      avgPuttsPerRound: (totalPutts / roundsWithPutts.length).toFixed(1),
+      onePuttRate: Math.round((onePuttCount / totalHoles) * 100),
+      threePuttRate: Math.round((threePuttPlusCount / totalHoles) * 100),
+      girRate: Math.round((girCount / girHoles) * 100),
+      girCount,
+      girHoles,
+    }
+  }, [filteredRounds, courses])
+
+  // ── ホール別パット統計 ──
+  const puttHoleStats = useMemo(() => {
+    if (!filterCourseId || holeRounds.length < 3) return null
+    const course = courses.find(c => c.id === filterCourseId)
+    if (!course) return null
+    const roundsWithPutts = holeRounds.filter(r => r.putts?.length === 18)
+    if (roundsWithPutts.length === 0) return null
+
+    return course.holes.map((hole, i) => {
+      const puttList = roundsWithPutts.map(r => parseInt(r.putts[i]) || 0).filter(p => p > 0)
+      if (puttList.length === 0) return null
+      const avg = puttList.reduce((s, v) => s + v, 0) / puttList.length
+      return {
+        hole: hole.number,
+        par: hole.par,
+        avgPutt: Math.round(avg * 100) / 100,
+      }
+    }).filter(Boolean)
+  }, [filterCourseId, holeRounds, courses])
+
   // Y軸domain（差分チャート用、固定: -0.5〜+2、0.5刻み）
   const AVG_DIFF_DOMAIN = [-0.5, 2]
   const AVG_DIFF_TICKS  = [-0.5, 0, 0.5, 1, 1.5, 2]
@@ -447,6 +512,67 @@ export default function Analysis() {
 
               {holeStats && (
                 <>
+                  {/* ── パット統計 ── */}
+                  {puttStats && (
+                    <section className="analysis-section">
+                      <div className="section-header-row">
+                        <h2>パット統計</h2>
+                        <span className="section-sub">{puttStats.roundCount}ラウンド</span>
+                      </div>
+                      <div className="putt-stats-grid">
+                        <div className="putt-stat-card">
+                          <div className="putt-stat-label">平均パット/H</div>
+                          <div className="putt-stat-value">{puttStats.avgPuttsPerHole}</div>
+                        </div>
+                        <div className="putt-stat-card">
+                          <div className="putt-stat-label">平均パット/R</div>
+                          <div className="putt-stat-value">{puttStats.avgPuttsPerRound}</div>
+                        </div>
+                        <div className="putt-stat-card">
+                          <div className="putt-stat-label">パーオン率</div>
+                          <div className="putt-stat-value">{puttStats.girRate}<span className="putt-stat-unit">%</span></div>
+                        </div>
+                        <div className="putt-stat-card">
+                          <div className="putt-stat-label">1パット率</div>
+                          <div className="putt-stat-value">{puttStats.onePuttRate}<span className="putt-stat-unit">%</span></div>
+                        </div>
+                        <div className="putt-stat-card">
+                          <div className="putt-stat-label">3パット率</div>
+                          <div className="putt-stat-value">{puttStats.threePuttRate}<span className="putt-stat-unit">%</span></div>
+                        </div>
+                      </div>
+                    </section>
+                  )}
+
+                  {/* ── ホール別平均パット数 ── */}
+                  {puttHoleStats && (
+                    <section className="analysis-section">
+                      <h2>ホール別平均パット数</h2>
+                      <div className="putt-hole-grid">
+                        {puttHoleStats.slice(0, 9).map(h => (
+                          <div key={h.hole} className="putt-hole-cell">
+                            <div className="putt-hole-num">{h.hole}</div>
+                            <div className="putt-hole-par">P{h.par}</div>
+                            <div className={`putt-hole-avg${h.avgPutt > 2.2 ? ' high' : h.avgPutt < 1.8 ? ' low' : ''}`}>
+                              {h.avgPutt}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="putt-hole-grid">
+                        {puttHoleStats.slice(9, 18).map(h => (
+                          <div key={h.hole} className="putt-hole-cell">
+                            <div className="putt-hole-num">{h.hole}</div>
+                            <div className="putt-hole-par">P{h.par}</div>
+                            <div className={`putt-hole-avg${h.avgPutt > 2.2 ? ' high' : h.avgPutt < 1.8 ? ' low' : ''}`}>
+                              {h.avgPutt}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
                   {/* ── ホール別平均スコア差分グラフ ── */}
                   <section className="section">
                     <div className="section-header">

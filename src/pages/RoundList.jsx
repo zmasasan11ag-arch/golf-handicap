@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext.jsx'
 import ScoreCell from '../components/ScoreCell.jsx'
 import { findTee } from '../data/courses.js'
+import { calcGIRCount, calcGIRRate } from '../utils/handicapCalc.js'
 
 export default function RoundList() {
   const { rounds, courses, deleteRound } = useApp()
@@ -76,7 +77,14 @@ export default function RoundList() {
                     </span>
                   </div>
                   <div className="round-card-right">
-                    <div className="round-score">{round.grossScore}</div>
+                    <div className="round-score">
+                      {round.grossScore}
+                      {round.putts?.length === 18 && (
+                        <span className="round-putt-mini">
+                          {round.putts.reduce((s, v) => s + (parseInt(v) || 0), 0)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <span className={`expand-icon${isExpanded ? ' open' : ''}`}>▶</span>
                 </div>
@@ -104,6 +112,24 @@ export default function RoundList() {
                       <span>CR / Slope</span>
                       <span>{tee?.cr ?? '--'} / {tee?.slope ?? '--'}</span>
                     </div>
+                    {round.putts?.length === 18 && course && (
+                      <>
+                        <div className="detail-row">
+                          <span>総パット数</span>
+                          <span>
+                            {round.putts.reduce((s, v) => s + (parseInt(v) || 0), 0)}
+                            （平均 {(round.putts.reduce((s, v) => s + (parseInt(v) || 0), 0) / 18).toFixed(2)}）
+                          </span>
+                        </div>
+                        <div className="detail-row">
+                          <span>パーオン率</span>
+                          <span>
+                            {calcGIRRate(round.scores, round.putts, course.holes)}%
+                            （{calcGIRCount(round.scores, round.putts, course.holes)}/18）
+                          </span>
+                        </div>
+                      </>
+                    )}
                     <div className="detail-row">
                       <span>入力方式</span>
                       <span>{round.inputMode === 'hole' ? 'ホールごと' : round.inputMode === 'image' ? '画像読み取り' : '合計スコア'}</span>
