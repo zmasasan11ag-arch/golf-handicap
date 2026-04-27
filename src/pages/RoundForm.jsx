@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../context/AppContext.jsx'
-import { escLimit, getScoreCategory } from '../utils/handicapCalc.js'
+import { getScoreCategory } from '../utils/handicapCalc.js'
 import { findTee, defaultGreenId, defaultTeeId } from '../data/courses.js'
 import TapSelector from '../components/TapSelector.jsx'
 
 const INPUT_MODES = [
   { id: 'hole',  label: 'ホールごと' },
   { id: 'total', label: '合計スコア' },
-  { id: 'image', label: '画像読み取り' },
 ]
 
 export default function RoundForm() {
@@ -464,17 +463,6 @@ function ScoreGrid({ holes, scores, putts, baseIndex, courseHandicap, onChange, 
         <div className="hg-total">{parTotal}</div>
       </div>
 
-      {/* ESC上限 */}
-      <div className="hole-grid-esc">
-        <div className="hg-label">ESC</div>
-        {holes.map(h => (
-          <div key={h.number} className="hg-cell esc-limit">
-            {escLimit(h.par, courseHandicap)}
-          </div>
-        ))}
-        <div className="hg-total">-</div>
-      </div>
-
       {/* スコア入力（タップ選択式） */}
       <div className="hole-grid-score">
         <div className="hg-label">Score</div>
@@ -485,7 +473,7 @@ function ScoreGrid({ holes, scores, putts, baseIndex, courseHandicap, onChange, 
           const cat    = parsed > 0 ? getScoreCategory(parsed, h.par) : ''
           const scoreOptions = [h.par - 1, h.par, h.par + 1, h.par + 2, h.par + 3]
           return (
-            <div key={h.number} className="hg-cell score-with-putt">
+            <div key={h.number} className="hg-cell">
               <TapSelector
                 value={val}
                 options={scoreOptions}
@@ -495,26 +483,34 @@ function ScoreGrid({ holes, scores, putts, baseIndex, courseHandicap, onChange, 
                 maxValue={15}
                 ariaLabel={`${h.number}番ホール（Par ${h.par}）スコア`}
               />
-              <span className="putt-input-badge">
-                <TapSelector
-                  value={putts[i]}
-                  options={[0, 1, 2, 3, 4]}
-                  onSelect={v => onPuttChange(puttBaseIndex + i, v)}
-                  className="putt-badge-input"
-                  minValue={0}
-                  maxValue={6}
-                  placeholder="2"
-                  ariaLabel={`${h.number}番ホール パット数`}
-                />
-              </span>
+            </div>
+          )
+        })}
+        <div className="hg-total">{scoreTotal > 0 ? scoreTotal : '--'}</div>
+      </div>
+
+      <div className="hole-grid-putt">
+        <div className="hg-label">Putt</div>
+        {holes.map((h, i) => {
+          const globalIdx = puttBaseIndex + i
+          const val = putts[i]
+          return (
+            <div key={h.number} className="hg-cell">
+              <TapSelector
+                value={val}
+                options={[0, 1, 2, 3, 4]}
+                onSelect={v => onPuttChange(globalIdx, v)}
+                className="putt-grid-input"
+                minValue={0}
+                maxValue={6}
+                placeholder="2"
+                ariaLabel={`${h.number}番ホール パット数`}
+              />
             </div>
           )
         })}
         <div className="hg-total">
-          {scoreTotal > 0 ? scoreTotal : '--'}
-          <div className="putt-total-sub">
-            P:{putts.reduce((s, v) => s + (parseInt(v) || 0), 0) || '-'}
-          </div>
+          {putts.reduce((s, v) => s + (parseInt(v) || 0), 0) || '--'}
         </div>
       </div>
 
