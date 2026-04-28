@@ -42,8 +42,13 @@ export default function RoundForm() {
   const green  = course?.greens?.find(g => g.id === greenId)
   const tee    = findTee(course, greenId, teeId)
 
-  // コース変更時: グリーン・ティーをリセット
+  // コース変更時: グリーン・ティーをリセット（初回マウント時はスキップ）
+  const isInitialMount = useRef(true)
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
     const newGreenId = defaultGreenId(course)
     setGreenId(newGreenId)
     setTeeId(defaultTeeId(course, newGreenId))
