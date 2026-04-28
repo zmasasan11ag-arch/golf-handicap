@@ -1705,3 +1705,37 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   border-top-right-radius: 0;
   border-top: none;
 }
+
+/* スコアとパット入力の縦揃えと丸型化 */
+.nine-hole-grid .hole-grid-score {
+  margin-bottom: 4px !important;
+}
+
+.nine-hole-grid .hole-grid-score .score-grid-input {
+  border-bottom-left-radius: 4px !important;
+  border-bottom-right-radius: 4px !important;
+}
+
+.putt-grid-input {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  border-top: 1px solid var(--border) !important;
+  border-top-left-radius: 50% !important;
+  border-top-right-radius: 50% !important;
+  margin: 0 auto !important;
+  display: block !important;
+}
+
+.nine-hole-grid .hole-grid-putt .hg-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 1px;
+}
+
+.nine-hole-grid .hole-grid-putt .tap-selector-wrapper {
+  width: 36px !important;
+  display: flex;
+  justify-content: center;
+}
