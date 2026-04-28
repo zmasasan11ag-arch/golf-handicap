@@ -576,15 +576,9 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   gap: 16px;
 }
 
-.nine-hole-grid {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
 .hole-grid-header,
 .hole-grid-par,
-.hole-grid-esc,
-.hole-grid-score {
+.hole-grid-esc {
   display: grid;
   grid-template-columns: 46px repeat(9, 1fr) 44px;
   gap: 2px;
@@ -624,10 +618,6 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 .hole-grid-par .hg-cell { color: var(--green-mid); font-weight: 600; font-size: 13px; }
 .esc-limit { color: #1565c0; font-size: 12px; }
 
-.hole-grid-score .hg-cell,
-.hole-grid-putt .hg-cell {
-  padding: 2px 1px;
-}
 
 /* ── スコアグリッド入力（色分けリアルタイム反映） ── */
 .score-grid-input {
@@ -1335,19 +1325,6 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   gap: 4px;
 }
 
-/* ── スコア入力 横スクロール ── */
-.nine-hole-grid {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.nine-hole-grid .hole-grid-header,
-.nine-hole-grid .hole-grid-par,
-.nine-hole-grid .hole-grid-esc {
-  display: grid;
-  grid-template-columns: 3rem repeat(9, minmax(2.4rem, 1fr)) 2.8rem;
-  min-width: 320px;
-}
 .confirm-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
 
 .round-card-left {
@@ -1372,27 +1349,6 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   align-items: center;
 }
 
-.putt-grid-input {
-  width: 100%;
-  height: 44px;
-  text-align: center;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 700;
-  background: #fff;
-  color: var(--text);
-  outline: none;
-  -moz-appearance: textfield;
-  -webkit-appearance: none;
-  padding: 0;
-}
-.putt-grid-input::-webkit-inner-spin-button,
-.putt-grid-input::-webkit-outer-spin-button { -webkit-appearance: none; }
-.putt-grid-input:focus {
-  border-color: var(--green-mid);
-  box-shadow: 0 0 0 2px rgba(46,125,50,.18);
-}
 
 /* ── タップ選択式セル ── */
 .tap-selector-cell {
@@ -1659,43 +1615,63 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   color: #888;
 }
 
-/* スコアとパット入力グリッド統一 */
-.nine-hole-grid .hole-grid-score,
-.nine-hole-grid .hole-grid-putt {
+/* ── スコア・パット入力グリッド ── */
+.nine-hole-grid {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.hole-grid-header,
+.hole-grid-par,
+.hole-grid-score,
+.hole-grid-putt {
   display: grid;
-  grid-template-columns: 3rem repeat(9, minmax(2.4rem, 1fr)) 2.8rem;
-  min-width: 320px;
+  grid-template-columns: 3rem repeat(9, minmax(2.6rem, 1fr)) 2.8rem;
+  min-width: 340px;
+  align-items: center;
+}
+
+.hole-grid-score {
   margin-bottom: 4px;
 }
 
-.nine-hole-grid .hole-grid-score .hg-cell,
-.nine-hole-grid .hole-grid-putt .hg-cell {
-  padding: 2px 1px;
-  box-sizing: border-box;
+.hole-grid-putt {
+  margin-bottom: 8px;
+}
+
+.hole-grid-score .hg-cell,
+.hole-grid-putt .hg-cell {
+  padding: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
-.nine-hole-grid .hole-grid-score .tap-selector-wrapper,
-.nine-hole-grid .hole-grid-putt .tap-selector-wrapper {
+/* スコア入力（四角） */
+.hole-grid-score .tap-selector-wrapper {
   width: 100%;
-  display: block;
 }
 
-.nine-hole-grid .hole-grid-score .tap-selector-cell {
+.hole-grid-score .tap-selector-cell {
   width: 100%;
   height: 44px;
+  border-radius: 4px;
   box-sizing: border-box;
 }
 
-.nine-hole-grid .hole-grid-putt .tap-selector-cell {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  margin: 0 auto;
+/* パット入力（丸） */
+.hole-grid-putt .tap-selector-wrapper {
+  width: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
+}
+
+.hole-grid-putt .tap-selector-cell {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
   box-sizing: border-box;
+  font-size: 15px;
 }
