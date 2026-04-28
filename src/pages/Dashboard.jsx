@@ -157,28 +157,7 @@ export default function Dashboard() {
         </section>
       )}
 
-      {/* ── 直近ラウンド ── */}
-      <section className="section">
-        <div className="section-header">
-          <h2>直近のラウンド</h2>
-          <Link to="/rounds" className="link-more">すべて見る</Link>
-        </div>
 
-        {recentRounds.length === 0 ? (
-          <div className="empty-state">
-            <p>ラウンドがまだ登録されていません</p>
-            <Link to="/rounds/new" className="btn btn-primary">
-              最初のラウンドを追加
-            </Link>
-          </div>
-        ) : (
-          <div className="round-list">
-            {recentRounds.map(round => (
-              <RoundSummaryCard key={round.id} round={round} formatDate={formatDate} />
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   )
 }
