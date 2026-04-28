@@ -1739,3 +1739,21 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   display: flex;
   justify-content: center;
 }
+
+/* パット入力丸を中央配置 */
+.nine-hole-grid .hole-grid-putt .hg-cell {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px 0 !important;
+}
+
+.nine-hole-grid .hole-grid-putt .tap-selector-wrapper {
+  width: 36px !important;
+  margin: 0 auto !important;
+  display: block !important;
+}
+
+.nine-hole-grid .hole-grid-putt .putt-grid-input {
+  margin: 0 !important;
+}
