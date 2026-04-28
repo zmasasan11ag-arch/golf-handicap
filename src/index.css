@@ -238,14 +238,6 @@ html, body {
 .round-card:active { transform: scale(.98); }
 
 .round-date { font-size: 13px; color: var(--text-sub); }
-.round-course {
-  font-size: 14px;
-  font-weight: 600;
-  margin-top: 2px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
 
 .tee-badge {
   font-size: 11px;
@@ -576,14 +568,6 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   gap: 16px;
 }
 
-.hole-grid-header,
-.hole-grid-par,
-.hole-grid-esc {
-  display: grid;
-  grid-template-columns: 46px repeat(9, 1fr) 44px;
-  gap: 2px;
-  margin-bottom: 2px;
-}
 
 .hg-label {
   font-size: 11px;
@@ -1350,26 +1334,6 @@ textarea.form-input { resize: vertical; min-height: 60px; }
 }
 
 
-/* ── タップ選択式セル ── */
-.tap-selector-cell {
-  width: 100%;
-  height: 44px;
-  text-align: center;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 700;
-  background: #fff;
-  color: var(--text);
-  outline: none;
-  padding: 0;
-  cursor: pointer;
-  transition: background .1s, color .1s, border-color .1s;
-  font-family: inherit;
-}
-.tap-selector-cell:active {
-  transform: scale(0.95);
-}
 
 /* タップ選択パネル（モーダル） */
 .tap-selector-options {
@@ -1659,6 +1623,20 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   height: 44px;
   border-radius: 4px;
   box-sizing: border-box;
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 16px;
+  text-align: center;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background .1s, color .1s, border-color .1s;
+  font-family: inherit;
+}
+.hole-grid-score .tap-selector-cell:active {
+  transform: scale(0.95);
 }
 
 /* パット入力（丸） */
@@ -1674,4 +1652,17 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   border-radius: 50%;
   box-sizing: border-box;
   font-size: 15px;
+  border: 1px solid var(--border);
+  font-weight: 700;
+  text-align: center;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background .1s, color .1s, border-color .1s;
+  font-family: inherit;
+}
+.hole-grid-putt .tap-selector-cell:active {
+  transform: scale(0.95);
 }
