@@ -1677,3 +1677,31 @@ textarea.form-input { resize: vertical; min-height: 60px; }
   font-size: 12px;
   color: #888;
 }
+
+/* スコアとパットを縦に密着させる */
+.nine-hole-grid .hole-grid-score {
+  margin-bottom: 0 !important;
+}
+
+.nine-hole-grid .hole-grid-putt {
+  margin-bottom: 2px;
+}
+
+.nine-hole-grid .hole-grid-score .hg-cell {
+  padding-bottom: 0;
+}
+
+.nine-hole-grid .hole-grid-putt .hg-cell {
+  padding-top: 0;
+}
+
+.nine-hole-grid .hole-grid-score .score-grid-input {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.nine-hole-grid .hole-grid-putt .putt-grid-input {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: none;
+}
